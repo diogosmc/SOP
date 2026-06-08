@@ -1,0 +1,179 @@
+[
+  {
+    "message": "Estou desanimado hoje",
+    "total_ms": 93,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_memory",
+      "update_journal"
+    ],
+    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Ah sei lá, tô afim de ficar deitado",
+    "total_ms": 31,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "update_journal"
+    ],
+    "response": "Entendi. Pelo que você falou antes, parece mais um dia de baixa energia do que falta de vontade.\n\nSe for descansar hoje, tudo bem. Só tenta escolher uma coisa mínima para não terminar o dia com sensação de culpa — tipo separar o material de amanhã ou revisar por 10 minutos.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Não vlw",
+    "total_ms": 27,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [],
+    "response": "Tudo certo.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Amanhã tenho autoescola às 8",
+    "total_ms": 43,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_memory",
+      "update_journal",
+      "create_reminder",
+      "create_task"
+    ],
+    "response": "Anotei isso como compromisso (Autoescola). Vou considerar na organização do seu dia.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Preciso revisar anatomia amanhã",
+    "total_ms": 36,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_task",
+      "update_journal",
+      "create_memory"
+    ],
+    "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Gastei 20 no lanche",
+    "total_ms": 42,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_finance_transaction",
+      "update_journal"
+    ],
+    "response": "Registrei esse gasto no financeiro.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Anota que segunda preciso resolver pendências",
+    "total_ms": 45,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_note"
+    ],
+    "response": "Anotado.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Quero organizar meu dia amanhã",
+    "total_ms": 27,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "update_journal"
+    ],
+    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Me ajuda a montar um plano de estudo rápido",
+    "total_ms": 32,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_study_log",
+      "update_journal"
+    ],
+    "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Hoje não fiz nada e tô me sentindo culpado",
+    "total_ms": 27,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "update_journal"
+    ],
+    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Tenho prova semana que vem",
+    "total_ms": 32,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "create_memory",
+      "update_journal",
+      "create_reminder",
+      "create_task"
+    ],
+    "response": "Anotei isso como compromisso (Prova semana que vem). Vou considerar na organização do seu dia.",
+    "status": "OK",
+    "error": null
+  },
+  {
+    "message": "Vou treinar peito hoje",
+    "total_ms": 29,
+    "first_response_ms": 0,
+    "model_used": null,
+    "used_fallback": true,
+    "used_llm": false,
+    "actions": [
+      "update_journal"
+    ],
+    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
+    "status": "OK",
+    "error": null
+  }
+]

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from app.modules.finance.models import FinanceTransaction
     from app.modules.habits.models import Habit
     from app.modules.memory.models import AIMemory, AINote, DailyJournal
+    from app.modules.memory.state_models import UserState
     from app.modules.notes.models import Document, DocumentChunk, Note
     from app.modules.reminders.models import Reminder
     from app.modules.study.models import Flashcard, StudySession, StudySubject, StudyTopic
@@ -81,4 +82,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     workout_logs: Mapped[list["WorkoutLog"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
+    )
+    user_state: Mapped[Optional["UserState"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan", uselist=False
     )

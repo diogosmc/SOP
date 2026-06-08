@@ -532,41 +532,32 @@ async def process_telegram_message(
     ollama_chat_func: Callable[..., Any] | None = None,
     skip_llm: bool = False,
 ) -> str:
-    """Process a free-form Telegram message without letting failures block the reply."""
-    await ensure_default_user_exists(db)
+    """Backward-compatible wrapper around Conversation Brain."""
+    from app.brain.conversation_manager import process_message as brain_process
 
-    classifier = classify_func or classify_telegram_message
-    classification = classifier(text)
-    intent = classification.get("intent", "general_chat")
-
-    logger.info(
-        "telegram_classification user_id=%s intent=%s categories=%s",
-        user_id,
-        intent,
-        classification.get("categories"),
-    )
-
-    tool_reply = await _execute_tools(db, user_id, text, classification)
-    if tool_reply:
-        logger.info("telegram_tool_executed user_id=%s intent=%s", user_id, intent)
-
-    memory_saved = await _safe_save_memory(db, user_id, text, classification)
-    if memory_saved:
-        logger.info("telegram_memory_saved user_id=%s intent=%s", user_id, intent)
-
-    if tool_reply:
-        return format_telegram_reply(tool_reply)
-
-    if not skip_llm and intent in {"general_chat", "question"}:
-        llm_reply = await _try_llm_reply(text, ollama_chat_func=ollama_chat_func)
-        if llm_reply:
-            return format_telegram_reply(llm_reply)
-
-    return format_telegram_reply(
-        _local_fallback(
-            classification,
-            text,
-            memory_saved=memory_saved,
-            tool_reply=tool_reply,
+    if classify_func is not None:
+        classification = classify_func(text)
+        intent = classification.get("intent", "general_chat")
+        tool_reply = await _execute_tools(db, user_id, text, classification)
+        memory_saved = await _safe_save_memory(db, user_id, text, classification)
+        if tool_reply:
+            return format_telegram_reply(tool_reply)
+        if not skip_llm and intent in {"general_chat", "question"}:
+            llm_reply = await _try_llm_reply(text, ollama_chat_func=ollama_chat_func)
+            if llm_reply:
+                return format_telegram_reply(llm_reply)
+        return format_telegram_reply(
+            _local_fallback(classification, text, memory_saved=memory_saved, tool_reply=tool_reply)
         )
+
+    result = await brain_process(
+        db,
+        user_id,
+        text,
+        origin="telegram",
+        prefer_speed=True,
+        allow_tools=True,
+        allow_llm=not skip_llm,
+        ollama_chat_func=ollama_chat_func,
     )
+    return result.response

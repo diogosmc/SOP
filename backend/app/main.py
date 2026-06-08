@@ -19,6 +19,7 @@ from app.middleware.auth import AuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_logger import RequestLoggerMiddleware
 from app.modules.ai.router import router as ai_router
+from app.modules.brain.router import router as brain_router
 from app.modules.auth.router import router as auth_router
 from app.modules.chat.router import router as chat_router
 from app.modules.finance.router import router as finance_router
@@ -43,7 +44,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging(settings.log_level)
     route_count = sum(1 for r in app.routes if hasattr(r, "path"))
     _logger.info(
-        "copiloto_started version=1.0.4 routes=%s auth=%s ai=/api/v1/ai/health",
+        "copiloto_started version=1.5.0 routes=%s auth=%s ai=/api/v1/ai/health",
         route_count,
         settings.auth_enabled,
     )
@@ -79,7 +80,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title=settings.app_name,
-        version="1.0.4",
+        version="1.5.0",
         lifespan=lifespan,
     )
 
@@ -110,6 +111,7 @@ def create_app() -> FastAPI:
     app.include_router(reminders_router, prefix="/api/v1")
     app.include_router(chat_router, prefix="/api/v1")
     app.include_router(memory_router, prefix="/api/v1")
+    app.include_router(brain_router, prefix="/api/v1")
     app.include_router(websocket_chat_router)
     return app
 

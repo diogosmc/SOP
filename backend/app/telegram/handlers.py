@@ -8,10 +8,12 @@ from sqlalchemy.exc import IntegrityError
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from app.brain.telegram_streamer import stream_telegram_response
+from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.modules.users.service import ensure_default_user_exists
 from app.telegram.formatter import format_telegram_reply
-from app.telegram.instructor import _local_fallback, classify_telegram_message, process_telegram_message
+from app.telegram.instructor import _local_fallback, classify_telegram_message
 from app.telegram.security import UNAUTHORIZED_MESSAGE, is_user_allowed
 
 logger = logging.getLogger(__name__)
@@ -22,12 +24,12 @@ _DEFAULT_USER_MISSING_MESSAGE = (
 )
 
 _LAST_RESORT_REPLY = (
-    "Entendi. Registrei como contexto. Quer que eu transforme isso em tarefa, lembrete ou nota?"
+    "Entendi. Vou guardar isso como contexto para te responder melhor nas próximas."
 )
 
 
 async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Process natural-language messages through the Jarvis Instructor pipeline."""
+    """Process natural-language messages through the Conversation Brain."""
     message = update.message
     if message is None or not message.text:
         return
@@ -47,15 +49,41 @@ async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         text[:300],
     )
 
+    settings = get_settings()
     user_id = None
+
     try:
+        from app.brain.conversation_manager import process_message
+
         async with AsyncSessionLocal() as db:
             user = await ensure_default_user_exists(db)
             user_id = user.id
-            reply = await process_telegram_message(db, user_id, text)
-            await db.commit()
-        logger.info("telegram_reply_sent user_id=%s", user_id)
-        await message.reply_text(format_telegram_reply(reply))
+
+            async def _factory():
+                brain_result = await process_message(
+                    db,
+                    user_id,
+                    text,
+                    origin="telegram",
+                    prefer_speed=True,
+                    allow_tools=True,
+                    allow_llm=True,
+                )
+                await db.commit()
+                return brain_result
+
+            if settings.telegram_streaming_enabled:
+                result = await stream_telegram_response(message, _factory)
+            else:
+                result = await _factory()
+                await message.reply_text(format_telegram_reply(result.response))
+
+            logger.info(
+                "telegram_reply_sent user_id=%s intent=%s ms=%s",
+                user_id,
+                result.intent,
+                result.response_time_ms,
+            )
     except IntegrityError:
         logger.exception(
             "telegram_instructor_error user_id=%s text=%s",

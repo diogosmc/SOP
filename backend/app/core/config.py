@@ -63,6 +63,14 @@ class Settings(BaseSettings):
     daily_summary_time: str = "23:00"
     weekly_summary_day: str = "sunday"
     weekly_summary_time: str = "20:00"
+    telegram_llm_timeout_seconds: float = 18.0
+    telegram_force_fast_model: bool = True
+    telegram_streaming_enabled: bool = True
+    telegram_stream_edit_interval_ms: int = 1200
+    telegram_stream_min_chars: int = 180
+    brain_recent_messages_limit: int = 12
+    brain_memory_limit: int = 5
+    brain_context_max_chars: int = 12000
 
     @field_validator("cors_origins", mode="before")
     @classmethod

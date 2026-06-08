@@ -137,7 +137,7 @@ async def test_integrity_error_handler_still_replies(db_session) -> None:
             return_value=_SessionContext(db_session),
         ):
             with patch(
-                "app.telegram.handlers.process_telegram_message",
+                "app.brain.conversation_manager.process_message",
                 side_effect=IntegrityError("fk", {}, Exception("fk")),
             ):
                 await handle_free_text(update, context)

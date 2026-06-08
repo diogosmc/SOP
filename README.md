@@ -1,6 +1,6 @@
 # COPILOTO
 
-**Sistema Operacional Pessoal Inteligente** — V1.0.1
+**Sistema Operacional Pessoal Inteligente** — V1.5.0
 
 Assistente pessoal local-first: tarefas, hábitos, notas, finanças, estudos, treino, chat com IA (Ollama), RAG, memória evolutiva, Telegram, relatórios e dashboard web.
 
@@ -361,11 +361,63 @@ cd frontend && npm run build
 
 ---
 
+## Conversation Brain (V1.5)
+
+O Telegram usa a camada **Conversation Brain** para conversar com contexto, memória e ações automáticas.
+
+### Testar no Telegram
+
+```powershell
+cd C:\SOP\backend
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+Mensagens de exemplo: desânimo, compromissos, estudo, gastos, `Não vlw` (resposta curta).
+
+### Benchmark
+
+```powershell
+cd C:\SOP\backend
+python scripts/benchmark_telegram_brain.py
+```
+
+Relatório salvo em `backend/reports/telegram_brain_benchmark.json`.
+
+Critérios de latência:
+
+| Tipo | Meta |
+|------|------|
+| Fallback local | < 1s |
+| LLM rápida (qwen3:4b) | < 6s |
+| LLM profunda (mistral:7b) | < 15s |
+
+### Debug API
+
+- `POST /api/v1/brain/test-message` — testar mensagem
+- `GET /api/v1/brain/state` — estado da conversa
+- `POST /api/v1/brain/benchmark` — rodar benchmark via API
+
+### Modelos recomendados (Ollama)
+
+| Uso | Modelo |
+|-----|--------|
+| Telegram / respostas rápidas | `qwen3:4b` |
+| Análise profunda / planejamento | `mistral:7b` |
+| Embeddings RAG | `nomic-embed-text` |
+
+Variáveis em `.env.example`: `TELEGRAM_LLM_TIMEOUT_SECONDS`, `TELEGRAM_STREAMING_ENABLED`, `BRAIN_*`.
+
+---
+
 ## Roadmap
 
 ### V1 — entregue
 
 Fases 01–24: infra, CRUD, IA, RAG, memória, Telegram, scheduler, dashboard, módulos frontend, finanças, estudos, treino, relatórios, auth/JWT, performance/cache, documentação e scripts.
+
+### V1.5 — entregue
+
+Conversation Brain: contexto, estado, memória selecionada, ações automáticas, streaming Telegram, benchmark.
 
 ### V1.1 — próximo
 
