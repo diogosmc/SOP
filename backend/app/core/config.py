@@ -36,8 +36,8 @@ class Settings(BaseSettings):
     ollama_model_fast: str = "qwen3:4b"
     ollama_model_main: str = "mistral:7b"
     ollama_model_embed: str = "nomic-embed-text"
-    ollama_context_size: int = 4096
-    ollama_keep_alive: str = "5m"
+    ollama_context_size: int = 2048
+    ollama_keep_alive: str = "10m"
     ollama_timeout_seconds: float = 45.0
     cache_enabled: bool = True
     single_user_mode: bool = True
@@ -63,14 +63,28 @@ class Settings(BaseSettings):
     daily_summary_time: str = "23:00"
     weekly_summary_day: str = "sunday"
     weekly_summary_time: str = "20:00"
-    telegram_llm_timeout_seconds: float = 18.0
+    telegram_response_mode: str = "hybrid"
+    telegram_llm_timeout_seconds: float = 8.0
+    telegram_llm_warmup: bool = True
     telegram_force_fast_model: bool = True
     telegram_streaming_enabled: bool = True
     telegram_stream_edit_interval_ms: int = 1200
     telegram_stream_min_chars: int = 180
+    telegram_context_max_chars: int = 4000
+    telegram_recent_messages_limit: int = 6
+    telegram_memory_limit: int = 3
     brain_recent_messages_limit: int = 12
     brain_memory_limit: int = 5
     brain_context_max_chars: int = 12000
+
+    @field_validator("telegram_response_mode", mode="before")
+    @classmethod
+    def validate_telegram_response_mode(cls, value: str) -> str:
+        allowed = {"fallback_only", "llm_only", "hybrid"}
+        normalized = str(value).strip().lower()
+        if normalized not in allowed:
+            raise ValueError(f"telegram_response_mode must be one of {allowed}")
+        return normalized
 
     @field_validator("cors_origins", mode="before")
     @classmethod

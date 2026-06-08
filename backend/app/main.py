@@ -31,6 +31,7 @@ from app.modules.reports.router import router as reports_router
 from app.modules.study.router import router as study_router
 from app.modules.workout.router import router as workout_router
 from app.modules.tasks.router import router as tasks_router
+from app.brain.ollama_warmup import warmup_ollama_fast_model
 from app.scheduler.app import start_scheduler, stop_scheduler
 from app.telegram.bot import start_telegram_bot, stop_telegram_bot
 from app.websocket.chat import router as websocket_chat_router
@@ -44,7 +45,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging(settings.log_level)
     route_count = sum(1 for r in app.routes if hasattr(r, "path"))
     _logger.info(
-        "copiloto_started version=1.5.0 routes=%s auth=%s ai=/api/v1/ai/health",
+        "copiloto_started version=1.5.1 routes=%s auth=%s ai=/api/v1/ai/health",
         route_count,
         settings.auth_enabled,
     )
@@ -55,6 +56,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         _logger.info("default_user_ready")
     except Exception:
         _logger.exception("default_user_bootstrap_failed")
+    if settings.telegram_llm_warmup:
+        try:
+            import asyncio
+
+            asyncio.create_task(warmup_ollama_fast_model())
+        except Exception:
+            _logger.exception("ollama_warmup_task_failed")
     try:
         await start_telegram_bot()
     except Exception:

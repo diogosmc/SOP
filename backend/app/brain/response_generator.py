@@ -7,90 +7,56 @@ import logging
 from typing import Any, Callable
 
 from app.ai.ollama import OllamaError, check_ollama_health, ollama_chat
+from app.brain.llm_policy import should_use_llm
 from app.brain.schemas import BrainAction, ConversationContext
 from app.brain.state_manager import is_ack_message
 from app.core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
-_DEEP_KEYWORDS = (
-    "plano completo",
-    "planejamento semanal",
-    "análise profunda",
-    "analise profunda",
-    "montar um plano",
-    "organizar meu dia",
-    "organizar meu dia amanhã",
-    "organizar meu dia amanha",
-    "reflexão",
-    "reflexao",
-    "estudo detalhado",
-)
-
 _ACK_REPLIES = ("Tudo certo.", "👍", "Beleza.", "Combinado.")
 
 
 def _pick_ack_reply(message: str) -> str:
     lowered = message.strip().lower()
-    if lowered in {"vlw", "valeu", "show"}:
+    if lowered in {"vlw", "valeu", "show", "não vlw", "nao vlw"}:
         return "👍"
     return _ACK_REPLIES[0]
 
 
-def _needs_deep_model(message: str) -> bool:
-    lowered = message.lower()
-    return any(keyword in lowered for keyword in _DEEP_KEYWORDS)
+def _build_telegram_system_prompt(context: ConversationContext) -> str:
+    state = context.state
+    primary = context.primary_intent or context.intent
+    secondary = context.secondary_intents or []
+    parts = [
+        "Você é o Copiloto pessoal do Diogo. Responda em português brasileiro, "
+        "de forma natural, direta e prática — sem parecer robô de comandos.",
+        f"Intenção: {primary}"
+        + (f" (também: {', '.join(secondary)})" if secondary else "")
+        + f". Estado: mood={state.mood}, mode={state.conversation_mode}.",
+        "Se a mensagem misturar rotina e emoção, aborde os dois. "
+        "Se for treino ou tarefa clara, seja objetivo. "
+        "Respostas curtas para acks. Não invente dados.",
+    ]
+    if context.today_journal_summary:
+        parts.append(f"Diário hoje: {context.today_journal_summary[:200]}")
+    if context.relevant_memories:
+        mem = context.relevant_memories[0].content[:150]
+        parts.append(f"Memória relevante: {mem}")
+    return "\n".join(parts)
 
 
 def _build_system_prompt(context: ConversationContext) -> str:
+    if context.origin in ("telegram", "benchmark"):
+        return _build_telegram_system_prompt(context)
     state = context.state
     parts = [
         "Você é o Copiloto pessoal do Diogo.",
-        "",
-        "Seu papel principal é conversar bem.",
-        "Seu papel secundário é agir silenciosamente quando fizer sentido.",
-        "",
-        "Você deve responder como uma IA pessoal parecida com ChatGPT/Claude:",
-        "- natural",
-        "- direta",
-        "- útil",
-        "- sem parecer robô de comandos",
-        "- sem transformar tudo em tarefa, nota ou lembrete",
-        "- lembrando do contexto recente",
-        "- usando as memórias relevantes",
-        "- ajudando o Diogo a agir sem julgar",
-        "",
-        "Regras:",
-        "1. Responda em português brasileiro.",
-        "2. Seja humano, direto e prático.",
-        "3. Se a mensagem for emocional, responda com apoio prático.",
-        "4. Não diga que é psicólogo, médico ou consultor financeiro.",
-        "5. Não faça diagnóstico.",
-        "6. Se ações foram executadas, mencione de forma natural.",
-        '7. Se o usuário disser "não", "vlw", "ok", responda curto.',
-        "8. Não invente dados.",
-        '9. Não repita "quer transformar em tarefa, lembrete ou nota?".',
-        "10. Só faça perguntas quando ajudarem a continuidade da conversa.",
-        "",
-        f"Estado atual: mood={state.mood}, energy={state.energy}, "
+        f"Estado: mood={state.mood}, energy={state.energy}, "
         f"topic={state.current_topic}, mode={state.conversation_mode}",
     ]
     if context.primary_goal:
-        parts.append(f"Objetivo principal: {context.primary_goal}")
-    if context.today_journal_summary:
-        parts.append(f"Diário hoje: {context.today_journal_summary}")
-    if context.important_memories:
-        parts.append("Memórias importantes:")
-        for mem in context.important_memories[:5]:
-            parts.append(f"- [{mem.category}] {mem.content}")
-    if context.relevant_memories:
-        parts.append("Memórias relevantes:")
-        for mem in context.relevant_memories[:5]:
-            parts.append(f"- {mem.content}")
-    if context.pending_tasks:
-        parts.append("Tarefas pendentes: " + "; ".join(context.pending_tasks[:3]))
-    if context.upcoming_reminders:
-        parts.append("Lembretes próximos: " + "; ".join(context.upcoming_reminders[:3]))
+        parts.append(f"Objetivo: {context.primary_goal}")
     return "\n".join(parts)
 
 
@@ -102,60 +68,87 @@ def _local_fallback(
     if context.is_ack or is_ack_message(message):
         return _pick_ack_reply(message)
 
-    intent = context.intent
+    primary = context.primary_intent or context.intent
+    secondary = context.secondary_intents or []
     state = context.state
     successful = [a for a in actions if a.success and a.action != "none"]
     lowered = message.lower()
 
-    if intent == "appointment":
+    if primary == "workout_log":
+        return (
+            "Boa. Registrei seu treino. Foca na execução hoje — "
+            "depois a gente ajusta volume e descanso se precisar."
+        )
+
+    if primary == "routine_planning" and "emotional_checkin" in secondary:
+        return (
+            "Entendi: amanhã você quer levantar cedo pra trabalhar, mas tá com preguiça agora.\n\n"
+            "Prepara hoje o que puder — roupa, alarme, café pronto — pra amanhã não depender de motivação. "
+            "E agora, descansa sem culpa se precisar."
+        )
+
+    if primary == "routine_planning":
+        return (
+            "Anotei sua rotina de amanhã. Prepara hoje o que puder — roupa, alarme, "
+            "lista curta — pra facilitar acordar cedo."
+        )
+
+    if primary == "planning_request":
+        return (
+            "Vamos simplificar: 1 prioridade principal, 1 tarefa leve e 1 coisa que já "
+            "deixa amanhã mais fácil (roupa, material, alarme)."
+        )
+
+    if primary == "appointment":
         title = context.classification.get("entities", {}).get("title", "compromisso")
         return f"Anotei isso como compromisso ({title}). Vou considerar na organização do seu dia."
 
-    if intent in {"study_log", "study_plan"}:
+    if primary in {"study_log", "study_plan"}:
         return "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois."
 
-    if intent == "expense_log":
+    if primary == "expense_log":
         if any(a.action == "create_finance_transaction" and a.success for a in successful):
             return "Registrei esse gasto no financeiro."
         return "Registrei esse gasto no diário."
 
-    if intent == "note_creation" and any(a.action == "create_note" and a.success for a in successful):
+    if primary == "note_creation" and any(a.action == "create_note" and a.success for a in successful):
         return "Anotado."
 
-    if intent == "goal_update":
+    if primary == "goal_update":
         return "Objetivo salvo. Vou usar isso para te acompanhar."
 
-    if intent == "emotional_checkin" or (
-        intent == "general_chat"
-        and (
-            state.mood == "desanimado"
-            or any(w in lowered for w in ("desanimado", "deitado", "culpado", "cansado"))
-        )
+    if primary == "emotional_checkin" or (
+        primary == "general_chat"
+        and state.conversation_mode == "apoio"
+        and primary != "workout_log"
     ):
-        if state.last_intent == "emotional_checkin" or "deitado" in lowered:
+        if "deitado" in lowered or state.last_intent == "emotional_checkin":
             return (
-                "Entendi. Pelo que você falou antes, parece mais um dia de baixa energia "
-                "do que falta de vontade.\n\n"
-                "Se for descansar hoje, tudo bem. Só tenta escolher uma coisa mínima para "
-                "não terminar o dia com sensação de culpa — tipo separar o material de amanhã "
-                "ou revisar por 10 minutos."
+                "Entendi. Parece mais um dia de baixa energia do que falta de vontade.\n\n"
+                "Se for descansar hoje, tudo bem. Escolhe uma coisa mínima pra não terminar "
+                "o dia com culpa — separar material de amanhã ou 10 min de revisão."
             )
         return (
             "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma "
-            "coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a "
-            "sensação de ter perdido o dia inteiro."
+            "coisa pequena hoje, nem que seja por 10 minutos."
         )
+
+    if primary == "general_chat" and state.conversation_mode == "apoio":
+        return "Quer desabafar um pouco ou prefere uma ação mínima pra hoje?"
 
     if successful:
         return "Entendi. Já registrei o que fazia sentido. Quer continuar por aqui?"
 
-    if state.last_assistant_message and state.conversation_mode == "apoio":
-        return (
-            "Entendi. Vou guardar isso como contexto. Se quiser, me diz o que seria "
-            "uma vitória mínima hoje — algo pequeno já conta."
-        )
-
     return "Entendi. Vou guardar isso como contexto para te responder melhor nas próximas."
+
+
+def generate_fast_fallback(
+    message: str,
+    context: ConversationContext,
+    actions: list[BrainAction] | None = None,
+) -> str:
+    """Lightweight fallback for streamer timeout without LLM."""
+    return _local_fallback(message, context, actions or [])
 
 
 def _format_actions_note(actions: list[BrainAction]) -> str:
@@ -173,36 +166,48 @@ async def generate_response(
     *,
     prefer_speed: bool = True,
     allow_llm: bool = True,
+    response_mode: str | None = None,
     ollama_chat_func: Callable[..., Any] | None = None,
 ) -> tuple[str, str | None, bool]:
     if context.is_ack or is_ack_message(message):
         return _pick_ack_reply(message), None, True
 
     fallback = _local_fallback(message, context, actions)
+    settings = get_settings()
+    mode = response_mode or settings.telegram_response_mode
 
-    if not allow_llm:
+    if mode == "fallback_only" or not allow_llm:
+        return fallback, None, True
+
+    if not should_use_llm(message, context, mode):
         return fallback, None, True
 
     try:
         if not await check_ollama_health():
             return fallback, None, True
 
-        settings = get_settings()
-        use_deep = _needs_deep_model(message) and not (
-            prefer_speed or settings.telegram_force_fast_model
+        use_fast = (
+            prefer_speed
+            or settings.telegram_force_fast_model
+            or context.origin in ("telegram", "benchmark")
         )
-        model = settings.ollama_model_main if use_deep else settings.ollama_model_fast
+        model = settings.ollama_model_fast if use_fast else settings.ollama_model_main
         chat_fn = ollama_chat_func or ollama_chat
 
         messages: list[dict[str, str]] = [
             {"role": "system", "content": _build_system_prompt(context)},
         ]
-        for item in context.recent_messages[-8:]:
+        recent_limit = (
+            settings.telegram_recent_messages_limit
+            if context.origin in ("telegram", "benchmark")
+            else 8
+        )
+        for item in context.recent_messages[-recent_limit:]:
             messages.append({"role": item["role"], "content": item["content"]})
         action_note = _format_actions_note(actions)
         user_content = message
         if action_note:
-            user_content += f"\n\n[Ações executadas silenciosamente: {action_note}]"
+            user_content += f"\n\n[Ações executadas: {action_note}]"
         messages.append({"role": "user", "content": user_content})
 
         result = await asyncio.wait_for(

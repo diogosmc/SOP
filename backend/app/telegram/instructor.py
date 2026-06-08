@@ -164,6 +164,176 @@ def _extract_expense_details(text: str, entities: dict[str, Any]) -> tuple[Decim
     return Decimal(str(amount)), category, description
 
 
+_EMOTIONAL_MARKERS = (
+    "preguiça",
+    "preguica",
+    "desanimado",
+    "sem vontade",
+    "cansado",
+    "cansada",
+    "culpado",
+    "culpada",
+    "deitado",
+    "deitada",
+)
+
+_ROUTINE_MARKERS = ("trabalhar", "trabalho", "levantar cedo", "rotina", "cedo")
+
+_WORKOUT_MARKERS = ("treinar", "treino", "peito", "pernas", "academia", "malhar", "corri")
+
+_PLANNING_MARKERS = (
+    "organizar meu dia",
+    "organizar dia",
+    "plano de estudo",
+    "montar um plano",
+    "organizar o dia",
+)
+
+_PRIMARY_PRIORITY = (
+    "note_creation",
+    "study_plan",
+    "expense_log",
+    "workout_log",
+    "study_log",
+    "task_creation",
+    "appointment",
+    "routine_planning",
+    "planning_request",
+    "emotional_checkin",
+    "question",
+    "general_chat",
+)
+
+
+def _detect_intent_signals(normalized: str, lowered: str, base: dict[str, Any]) -> list[str]:
+    signals: list[str] = []
+    base_intent = base.get("intent", "general_chat")
+
+    if any(marker in lowered for marker in _EMOTIONAL_MARKERS) or base_intent == "emotional_checkin":
+        signals.append("emotional_checkin")
+
+    if any(marker in lowered for marker in _WORKOUT_MARKERS) or base_intent == "workout_log":
+        signals.append("workout_log")
+
+    has_appointment_marker = any(marker in lowered for marker in _APPOINTMENT_MARKERS)
+    has_finance_keyword = any(
+        word in lowered for word in ("gastei", "paguei", "comprei", "despesa", "gasto de", "r$", "reais")
+    )
+    if base_intent == "expense_log" and (has_finance_keyword or not has_appointment_marker):
+        signals.append("expense_log")
+
+    if any(marker in lowered for marker in _PLANNING_MARKERS):
+        signals.append("planning_request")
+
+    if ("amanhã" in lowered or "amanha" in lowered) and any(
+        marker in lowered for marker in _ROUTINE_MARKERS
+    ):
+        signals.append("routine_planning")
+
+    if any(marker in lowered for marker in _APPOINTMENT_MARKERS):
+        signals.append("appointment")
+    elif ("amanhã" in lowered or "amanha" in lowered) and any(
+        word in lowered for word in ("vou", "tenho")
+    ):
+        if "routine_planning" not in signals:
+            signals.append("appointment")
+
+    if base_intent in {"study_plan", "study_log"}:
+        signals.append(base_intent)
+
+    if base_intent == "task_creation":
+        signals.append("task_creation")
+
+    if "?" in normalized and base_intent == "general_chat":
+        signals.append("question")
+
+    if not signals:
+        signals.append(base_intent if base_intent else "general_chat")
+
+    seen: list[str] = []
+    for item in signals:
+        if item not in seen:
+            seen.append(item)
+    return seen
+
+
+def _pick_primary_and_secondary(signals: list[str]) -> tuple[str, list[str]]:
+    if "routine_planning" in signals and "emotional_checkin" in signals:
+        return "routine_planning", ["emotional_checkin"]
+
+    for intent in _PRIMARY_PRIORITY:
+        if intent in signals:
+            return intent, [s for s in signals if s != intent]
+
+    primary = signals[0]
+    return primary, [s for s in signals[1:] if s != primary]
+
+
+def _finalize_classification(
+    result: dict[str, Any],
+    normalized: str,
+    lowered: str,
+    entities: dict[str, Any],
+    *,
+    primary: str,
+    secondary: list[str],
+) -> dict[str, Any]:
+    result["primary_intent"] = primary
+    result["secondary_intents"] = secondary
+    result["intent"] = primary
+
+    if primary == "appointment":
+        result.update(
+            {
+                "categories": ["routine", "appointment"],
+                "should_save_memory": True,
+                "entities": {
+                    **entities,
+                    "title": _extract_appointment_title(normalized),
+                    "remind_at": _parse_relative_datetime(normalized),
+                },
+            }
+        )
+    elif primary == "routine_planning":
+        result.update(
+            {
+                "categories": ["routine"],
+                "should_save_memory": True,
+                "entities": {
+                    **entities,
+                    "title": normalized[:100],
+                    "remind_at": _parse_relative_datetime(normalized),
+                },
+            }
+        )
+    elif primary == "task_creation":
+        result["should_save_memory"] = True
+        result["entities"] = {**entities, "title": _extract_task_title(normalized)}
+        if "amanhã" in lowered or "amanha" in lowered:
+            result["entities"]["remind_at"] = _parse_relative_datetime(normalized)
+    elif primary == "emotional_checkin":
+        result["should_save_memory"] = True
+        result["categories"] = list(set((result.get("categories") or []) + ["emotional"]))
+    elif primary == "expense_log":
+        amount, category, description = _extract_expense_details(normalized, entities)
+        result["should_save_memory"] = True
+        result["entities"] = {
+            **entities,
+            "amount": float(amount),
+            "category": category,
+            "description": description,
+        }
+    elif primary in {"study_log", "study_plan", "workout_log", "planning_request"}:
+        result["should_save_memory"] = True
+    elif primary == "general_chat" and len(normalized) >= 12:
+        result["should_save_memory"] = True
+        result["categories"] = ["context"]
+
+    if secondary:
+        result["confidence"] = 0.8
+    return result
+
+
 def classify_telegram_message(text: str) -> dict[str, Any]:
     """Classify a Telegram message with Jarvis-oriented rules."""
     result = classify_message(text)
@@ -176,6 +346,8 @@ def classify_telegram_message(text: str) -> dict[str, Any]:
         result.update(
             {
                 "intent": "note_creation",
+                "primary_intent": "note_creation",
+                "secondary_intents": [],
                 "categories": ["note"],
                 "should_save_memory": True,
                 "entities": {**entities, "title": title, "content": content},
@@ -188,6 +360,8 @@ def classify_telegram_message(text: str) -> dict[str, Any]:
         result.update(
             {
                 "intent": "study_plan",
+                "primary_intent": "study_plan",
+                "secondary_intents": [],
                 "categories": ["study"],
                 "should_save_memory": True,
                 "entities": {
@@ -199,55 +373,11 @@ def classify_telegram_message(text: str) -> dict[str, Any]:
         )
         return result
 
-    if any(marker in lowered for marker in _APPOINTMENT_MARKERS) or (
-        ("amanhã" in lowered or "amanha" in lowered)
-        and any(word in lowered for word in ("vou", "tenho"))
-    ):
-        result.update(
-            {
-                "intent": "appointment",
-                "categories": ["routine", "appointment"],
-                "should_save_memory": True,
-                "entities": {
-                    **entities,
-                    "title": _extract_appointment_title(normalized),
-                    "remind_at": _parse_relative_datetime(normalized),
-                },
-            }
-        )
-        return result
-
-    if result.get("intent") == "task_creation":
-        result["should_save_memory"] = True
-        result["entities"] = {**entities, "title": _extract_task_title(normalized)}
-        if "amanhã" in lowered or "amanha" in lowered:
-            result["entities"]["remind_at"] = _parse_relative_datetime(normalized)
-        return result
-
-    if result.get("intent") == "emotional_checkin":
-        result["should_save_memory"] = True
-        return result
-
-    if result.get("intent") == "expense_log":
-        amount, category, description = _extract_expense_details(normalized, entities)
-        result["should_save_memory"] = True
-        result["entities"] = {
-            **entities,
-            "amount": float(amount),
-            "category": category,
-            "description": description,
-        }
-        return result
-
-    if result.get("intent") == "study_log":
-        result["should_save_memory"] = True
-        return result
-
-    if result.get("intent") == "general_chat" and len(normalized) >= 12:
-        result["should_save_memory"] = True
-        result["categories"] = ["context"]
-
-    return result
+    signals = _detect_intent_signals(normalized, lowered, result)
+    primary, secondary = _pick_primary_and_secondary(signals)
+    return _finalize_classification(
+        result, normalized, lowered, entities, primary=primary, secondary=secondary
+    )
 
 
 async def _rollback_safe(db: AsyncSession) -> None:

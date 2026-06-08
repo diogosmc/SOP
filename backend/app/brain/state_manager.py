@@ -29,6 +29,30 @@ _ACK_PHRASES = frozenset(
     }
 )
 
+_EXPLICIT_PRODUCTIVITY_INTENTS = frozenset(
+    {
+        "workout_log",
+        "study_plan",
+        "study_log",
+        "expense_log",
+        "task_creation",
+        "note_creation",
+    }
+)
+
+_EMOTIONAL_MARKERS = (
+    "desanimado",
+    "cansado",
+    "cansada",
+    "culpado",
+    "culpada",
+    "deitado",
+    "deitada",
+    "preguiça",
+    "preguica",
+    "sem vontade",
+)
+
 
 def is_ack_message(message: str) -> bool:
     normalized = message.strip().lower().rstrip(".! ")
@@ -69,6 +93,19 @@ async def _get_row(db: AsyncSession, user_id: uuid.UUID) -> UserState:
     return row
 
 
+async def reset_user_state(db: AsyncSession, user_id: uuid.UUID) -> None:
+    """Clear accumulated mood/topic between benchmark messages."""
+    row = await _get_row(db, user_id)
+    row.mood = None
+    row.energy = None
+    row.current_focus = None
+    row.current_topic = None
+    row.conversation_mode = "normal"
+    row.last_intent = None
+    row.state_metadata = {}
+    await db.flush()
+
+
 async def update_state_from_message(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -78,23 +115,45 @@ async def update_state_from_message(
 ) -> ConversationState:
     row = await _get_row(db, user_id)
     row.last_user_message = message[:2000]
-    row.last_intent = intent
 
+    primary = classification.get("primary_intent") or intent
+    secondary = list(classification.get("secondary_intents") or [])
+    row.last_intent = primary
     lowered = message.lower()
-    if intent == "emotional_checkin" or any(
-        w in lowered for w in ("desanimado", "cansado", "culpado", "deitado", "preguiça", "preguica")
+
+    if primary in _EXPLICIT_PRODUCTIVITY_INTENTS:
+        row.mood = None
+        row.energy = None
+        row.conversation_mode = "produtividade"
+        if primary in {"study_log", "study_plan"} or "estud" in lowered or "revisar" in lowered:
+            row.current_topic = "estudo"
+        elif primary == "workout_log":
+            row.current_topic = "treino"
+    elif primary in {"routine_planning", "appointment"}:
+        row.current_topic = "agenda"
+        row.conversation_mode = "organização"
+        if primary == "routine_planning" and "emotional_checkin" not in secondary:
+            pass
+    elif primary == "emotional_checkin" or (
+        "emotional_checkin" in secondary
+        and primary not in _EXPLICIT_PRODUCTIVITY_INTENTS
+        and primary != "routine_planning"
     ):
         row.mood = "desanimado"
         row.energy = "baixa"
         row.conversation_mode = "apoio"
-    elif intent in {"study_log", "study_plan"} or "estud" in lowered or "revisar" in lowered:
-        row.current_topic = "estudo"
-        row.conversation_mode = "produtividade"
-    elif intent == "appointment" or "amanhã" in lowered or "amanha" in lowered:
-        row.current_topic = "agenda"
-        row.conversation_mode = "organização"
+    elif any(marker in lowered for marker in _EMOTIONAL_MARKERS) and primary == "general_chat":
+        row.mood = "desanimado"
+        row.energy = "baixa"
+        row.conversation_mode = "apoio"
     elif is_ack_message(message):
         row.conversation_mode = "normal"
+
+    if secondary:
+        metadata = dict(row.state_metadata or {})
+        metadata["mixed"] = True
+        metadata["secondary"] = secondary
+        row.state_metadata = metadata
 
     if classification.get("entities", {}).get("topic"):
         row.current_topic = str(classification["entities"]["topic"])[:128]

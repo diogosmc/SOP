@@ -11,10 +11,13 @@ from app.telegram.instructor import classify_telegram_message
 
 def _ctx(message: str) -> ConversationContext:
     classification = classify_telegram_message(message)
+    primary = classification.get("primary_intent") or classification["intent"]
     return ConversationContext(
         message=message,
         classification=classification,
-        intent=classification["intent"],
+        intent=primary,
+        primary_intent=primary,
+        secondary_intents=list(classification.get("secondary_intents") or []),
         state=ConversationState(mood="desanimado", conversation_mode="apoio"),
         is_ack=message.strip().lower() in {"não vlw", "vlw"},
     )

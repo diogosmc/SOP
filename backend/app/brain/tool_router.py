@@ -13,11 +13,19 @@ def decide_actions(
     if context.is_ack or is_ack_message(message):
         return [BrainAction(action="none")]
 
-    intent = context.intent
+    intent = context.primary_intent or context.intent
     entities = context.classification.get("entities") or {}
     actions: list[BrainAction] = []
 
-    if intent == "appointment":
+    if intent == "routine_planning":
+        actions.extend(
+            [
+                BrainAction(action="create_memory", params={"content": message}),
+                BrainAction(action="update_journal", params={"message": message}),
+            ]
+        )
+
+    elif intent == "appointment":
         actions.extend(
             [
                 BrainAction(action="create_memory", params={"content": message}),

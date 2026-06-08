@@ -25,6 +25,7 @@ async def test_run_benchmark_messages(db_session, default_user_id, tmp_path: Pat
         db_session,
         default_user_id,
         ["Estou desanimado hoje", "Não vlw"],
+        mode="fallback_only",
         process_func=fake_process,
     )
     assert len(results) == 2
@@ -51,7 +52,7 @@ def test_benchmark_report_format() -> None:
 def test_save_benchmark_report(tmp_path: Path) -> None:
     path = tmp_path / "benchmark.json"
     save_benchmark_report(
-        [BenchmarkResult(message="x", total_ms=1, first_response_ms=1)],
+        [BenchmarkResult(message="x", mode="hybrid", total_ms=1, first_response_ms=1)],
         path,
     )
     assert path.exists()

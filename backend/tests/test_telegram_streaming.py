@@ -28,6 +28,7 @@ async def test_streaming_edits_in_blocks() -> None:
         mock_settings.return_value.telegram_streaming_enabled = True
         mock_settings.return_value.telegram_stream_edit_interval_ms = 100
         mock_settings.return_value.telegram_stream_min_chars = 50
+        mock_settings.return_value.telegram_llm_timeout_seconds = 8.0
         result = await stream_telegram_response(message, factory)
 
     assert result.response == long_response

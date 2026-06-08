@@ -57,6 +57,7 @@ async def process_message(
     prefer_speed: bool = True,
     allow_tools: bool = True,
     allow_llm: bool = True,
+    response_mode: str | None = None,
     ollama_chat_func: Callable[..., Any] | None = None,
 ) -> BrainResult:
     started = time.perf_counter()
@@ -107,6 +108,7 @@ async def process_message(
             actions,
             prefer_speed=prefer_speed,
             allow_llm=allow_llm,
+            response_mode=response_mode,
             ollama_chat_func=ollama_chat_func,
         )
         logger.info(

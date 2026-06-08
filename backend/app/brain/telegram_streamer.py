@@ -8,6 +8,8 @@ import time
 from collections.abc import AsyncIterator, Callable
 from typing import Any
 
+from sqlalchemy.exc import IntegrityError
+
 from app.brain.schemas import BrainResult
 from app.core.config import get_settings
 from app.telegram.formatter import format_telegram_reply
@@ -25,15 +27,10 @@ async def _stream_tokens(
     ollama_stream_func: Callable[..., AsyncIterator[str]] | None = None,
 ) -> AsyncIterator[str]:
     from app.ai.ollama import ollama_stream_chat
-    from app.brain.response_generator import _build_system_prompt, _needs_deep_model
+    from app.brain.response_generator import _build_system_prompt
 
     settings = get_settings()
-    use_deep = _needs_deep_model(message)
-    model = (
-        settings.ollama_model_main
-        if use_deep and not settings.telegram_force_fast_model
-        else settings.ollama_model_fast
-    )
+    model = settings.ollama_model_fast
     stream_fn = ollama_stream_func or ollama_stream_chat
     messages = [
         {"role": "system", "content": _build_system_prompt(context)},
@@ -51,12 +48,28 @@ async def stream_telegram_response(
 ) -> BrainResult:
     """Send/edit Telegram message with block-based streaming."""
     settings = get_settings()
-    sent = await telegram_message.reply_text(format_telegram_reply(THINKING_PLACEHOLDER))
-    first_response_ms = int((time.perf_counter()) * 1000)
     start = time.perf_counter()
+    sent = await telegram_message.reply_text(format_telegram_reply(THINKING_PLACEHOLDER))
+    first_response_ms = int((time.perf_counter() - start) * 1000)
+
+    factory_timeout = settings.telegram_llm_timeout_seconds + 2.0
 
     if not settings.telegram_streaming_enabled:
-        result: BrainResult = await brain_result_factory()
+        try:
+            result: BrainResult = await asyncio.wait_for(
+                brain_result_factory(),
+                timeout=factory_timeout,
+            )
+        except IntegrityError:
+            raise
+        except asyncio.TimeoutError:
+            logger.warning("telegram_brain_factory_timeout ms=%s", factory_timeout * 1000)
+            result = BrainResult(
+                response=format_telegram_reply(
+                    "Demorou mais que o esperado. Tenta de novo ou simplifica a mensagem."
+                ),
+                used_fallback=True,
+            )
         try:
             await sent.edit_text(format_telegram_reply(result.response))
         except Exception:
@@ -71,11 +84,17 @@ async def stream_telegram_response(
 
     try:
         if use_streaming_llm:
-            factory_result = await brain_result_factory()
+            factory_result = await asyncio.wait_for(
+                brain_result_factory(),
+                timeout=factory_timeout,
+            )
             accumulated = factory_result.response
             result = factory_result
         else:
-            result = await brain_result_factory()
+            result = await asyncio.wait_for(
+                brain_result_factory(),
+                timeout=factory_timeout,
+            )
             accumulated = result.response
             min_chars = settings.telegram_stream_min_chars
             interval = settings.telegram_stream_edit_interval_ms / 1000.0
@@ -90,10 +109,31 @@ async def stream_telegram_response(
                     except Exception:
                         logger.debug("telegram_stream_edit_skipped")
                     await asyncio.sleep(0.05)
+    except IntegrityError:
+        raise
+    except asyncio.TimeoutError:
+        logger.warning("telegram_streaming_timeout ms=%s", factory_timeout * 1000)
+        result = BrainResult(
+            response=format_telegram_reply(
+                "Demorou mais que o esperado. Tenta de novo ou simplifica a mensagem."
+            ),
+            used_fallback=True,
+        )
     except Exception:
         logger.exception("telegram_streaming_failed")
         if result is None:
-            result = await brain_result_factory()
+            try:
+                result = await asyncio.wait_for(
+                    brain_result_factory(),
+                    timeout=factory_timeout,
+                )
+            except IntegrityError:
+                raise
+            except Exception:
+                result = BrainResult(
+                    response=format_telegram_reply("Entendi. Vou guardar isso como contexto."),
+                    used_fallback=True,
+                )
 
     try:
         await sent.edit_text(format_telegram_reply(result.response))

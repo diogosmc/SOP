@@ -22,7 +22,7 @@ async def test_context_builder_limits_size(db_session, default_user_id) -> None:
     context = await build_conversation_context(
         db_session, default_user_id, "Mensagem de teste para contexto"
     )
-    assert context.context_chars <= 12000
+    assert context.context_chars <= 4000
 
 
 def test_context_trim_respects_max_chars() -> None:

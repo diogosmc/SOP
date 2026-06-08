@@ -143,18 +143,31 @@ async def build_conversation_context(
     db: AsyncSession,
     user_id: uuid.UUID,
     message: str,
+    *,
+    origin: str = "telegram",
 ) -> ConversationContext:
     settings = get_settings()
     classification = classify_telegram_message(message)
-    intent = classification.get("intent", "general_chat")
+    primary = classification.get("primary_intent") or classification.get("intent", "general_chat")
+    secondary = list(classification.get("secondary_intents") or [])
     state = await get_or_create_user_state(db, user_id)
 
-    important = await select_important_memories(db, user_id, settings.brain_memory_limit)
-    relevant = await select_relevant_memories(db, user_id, message, settings.brain_memory_limit)
-    recent = await _recent_messages(db, user_id, settings.brain_recent_messages_limit)
+    if origin in ("telegram", "benchmark"):
+        memory_limit = settings.telegram_memory_limit
+        recent_limit = settings.telegram_recent_messages_limit
+        max_chars = settings.telegram_context_max_chars
+    else:
+        memory_limit = settings.brain_memory_limit
+        recent_limit = settings.brain_recent_messages_limit
+        max_chars = settings.brain_context_max_chars
+
+    important = await select_important_memories(db, user_id, memory_limit)
+    relevant = await select_relevant_memories(db, user_id, message, memory_limit)
+    recent = await _recent_messages(db, user_id, recent_limit)
 
     context = ConversationContext(
         message=message,
+        origin=origin,
         recent_messages=recent,
         state=state,
         important_memories=important,
@@ -164,7 +177,9 @@ async def build_conversation_context(
         today_journal_summary=await _today_journal_summary(db, user_id),
         primary_goal=await _primary_goal(db, user_id),
         classification=classification,
-        intent=intent,
+        intent=primary,
+        primary_intent=primary,
+        secondary_intents=secondary,
         is_ack=is_ack_message(message),
     )
-    return _trim_context(context, settings.brain_context_max_chars)
+    return _trim_context(context, max_chars)

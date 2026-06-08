@@ -36,6 +36,7 @@ class MemorySnippet(BaseModel):
 
 class ConversationContext(BaseModel):
     message: str
+    origin: str = "telegram"
     recent_messages: list[dict[str, str]] = Field(default_factory=list)
     state: ConversationState = Field(default_factory=ConversationState)
     important_memories: list[MemorySnippet] = Field(default_factory=list)
@@ -46,6 +47,8 @@ class ConversationContext(BaseModel):
     primary_goal: str | None = None
     classification: dict[str, Any] = Field(default_factory=dict)
     intent: str = "general_chat"
+    primary_intent: str = "general_chat"
+    secondary_intents: list[str] = Field(default_factory=list)
     is_ack: bool = False
     context_chars: int = 0
 
@@ -80,8 +83,11 @@ class BrainResult(BaseModel):
 
 class BenchmarkResult(BaseModel):
     message: str
+    mode: str = "fallback_only"
     total_ms: int
     first_response_ms: int
+    primary_intent: str = "general_chat"
+    secondary_intents: list[str] = Field(default_factory=list)
     model_used: str | None = None
     used_fallback: bool = False
     used_llm: bool = False

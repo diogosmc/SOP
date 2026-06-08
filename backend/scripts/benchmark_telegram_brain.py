@@ -12,7 +12,12 @@ if str(BACKEND_DIR) not in sys.path:
     sys.path.insert(0, str(BACKEND_DIR))
 
 import app.db.models  # noqa: F401
-from app.brain.benchmarks import format_benchmark_report, run_benchmark, save_benchmark_report
+from app.brain.benchmarks import (
+    BENCHMARK_MODES,
+    format_benchmark_report,
+    run_all_mode_benchmarks,
+    save_benchmark_report,
+)
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.session import AsyncSessionLocal
@@ -27,12 +32,15 @@ async def main() -> None:
 
     async with AsyncSessionLocal() as db:
         await ensure_default_user_exists(db, settings)
-        results = await run_benchmark(db, user_id, allow_llm=False)
+        grouped = await run_all_mode_benchmarks(db, user_id)
         await db.commit()
 
-    print(format_benchmark_report(results))
-    save_benchmark_report(results, report_path)
-    print(f"Relatório salvo em: {report_path}")
+    for mode in BENCHMARK_MODES:
+        print(f"\n{'=' * 40}\n{mode.upper()}\n{'=' * 40}")
+        print(format_benchmark_report(grouped[mode]))
+
+    save_benchmark_report(grouped, report_path)
+    print(f"\nRelatório salvo em: {report_path}")
 
 
 if __name__ == "__main__":
