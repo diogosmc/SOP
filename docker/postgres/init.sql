@@ -1,0 +1,3 @@
+-- COPILOTO — PostgreSQL init (Fase 02)
+CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
