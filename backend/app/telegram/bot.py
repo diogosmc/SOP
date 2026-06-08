@@ -8,7 +8,7 @@ from typing import Callable, Optional
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from app.core.config import get_settings
-from app.telegram.commands import cmd_chat, cmd_help, cmd_resumo, cmd_start, cmd_status
+from app.telegram.commands import cmd_chat, cmd_debug, cmd_help, cmd_resumo, cmd_start, cmd_status
 from app.telegram.handlers import handle_free_text
 from app.telegram.security import should_start_bot
 
@@ -39,6 +39,7 @@ class TelegramBot:
         app.add_handler(CommandHandler("start", cmd_start))
         app.add_handler(CommandHandler("help", cmd_help))
         app.add_handler(CommandHandler("status", cmd_status))
+        app.add_handler(CommandHandler("debug", cmd_debug))
         app.add_handler(CommandHandler("resumo", cmd_resumo))
         app.add_handler(CommandHandler("chat", cmd_chat))
         app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_free_text))

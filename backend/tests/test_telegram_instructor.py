@@ -24,11 +24,8 @@ async def test_route_instructor_calls_classifier(db_session, default_user_id) ->
             "requires_confirmation": False,
         }
     )
-    mock_chat = AsyncMock(
-        return_value=MagicMock(response="Resposta mockada", model_used="test", response_time_ms=1)
-    )
 
-    with patch("app.telegram.tools.handle_chat_fallback", new=AsyncMock(return_value="Resposta mockada")):
+    with patch("app.telegram.instructor._try_llm_reply", new=AsyncMock(return_value=None)):
         reply = await route_instructor_message(
             db_session,
             default_user_id,
@@ -37,14 +34,15 @@ async def test_route_instructor_calls_classifier(db_session, default_user_id) ->
         )
 
     mock_classify.assert_called_once()
-    assert reply == "Resposta mockada"
+    assert reply
+    assert "algo deu errado" not in reply.lower()
 
 
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_route_instructor_medicina_creates_memory(db_session, default_user_id) -> None:
     reply = await route_instructor_message(
-        db_session, default_user_id, "Quero passar em Medicina"
+        db_session, default_user_id, "Quero passar em Medicina", skip_llm=True
     )
 
     result = await db_session.execute(
@@ -64,7 +62,9 @@ async def test_route_instructor_medicina_creates_memory(db_session, default_user
 async def test_route_instructor_study_creates_note_and_journal(
     db_session, default_user_id
 ) -> None:
-    reply = await route_instructor_message(db_session, default_user_id, "Estudei Python")
+    reply = await route_instructor_message(
+        db_session, default_user_id, "Estudei Python", skip_llm=True
+    )
 
     notes_result = await db_session.execute(
         select(Note).where(Note.user_id == default_user_id)
@@ -78,9 +78,9 @@ async def test_route_instructor_study_creates_note_and_journal(
 @pytest.mark.integration
 @pytest.mark.asyncio
 async def test_route_instructor_chat_fallback_mocked(db_session, default_user_id) -> None:
-    mock_fallback = AsyncMock(return_value="Fallback IA")
+    mock_llm = AsyncMock(return_value="Fallback IA")
 
-    with patch("app.telegram.tools.handle_chat_fallback", mock_fallback):
+    with patch("app.telegram.instructor._try_llm_reply", mock_llm):
         reply = await route_instructor_message(
             db_session,
             default_user_id,
@@ -96,7 +96,7 @@ async def test_route_instructor_chat_fallback_mocked(db_session, default_user_id
         )
 
     assert reply == "Fallback IA"
-    mock_fallback.assert_awaited_once()
+    mock_llm.assert_awaited_once()
 
 
 @pytest.mark.asyncio

@@ -50,5 +50,5 @@ async def test_cmd_help_returns_examples() -> None:
         await cmd_help(update, context)
 
     reply = update.message.reply_text.await_args.args[0]
-    assert "Estudei Python" in reply
-    assert "Medicina" in reply
+    assert "autoescola" in reply.lower()
+    assert "desanimado" in reply.lower()

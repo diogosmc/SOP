@@ -37,6 +37,32 @@ def format_status_message(
     )
 
 
+def format_debug_message(
+    *,
+    version: str,
+    api_ok: bool,
+    db_ok: bool,
+    redis_ok: bool,
+    ollama_ok: bool,
+    telegram_user_ok: bool,
+    default_user_ok: bool,
+    default_user_name: str,
+    memory_count: int,
+    pending_tasks: int,
+) -> str:
+    return format_telegram_reply(
+        f"Debug COPILOTO v{version}\n"
+        f"• API: {'ok' if api_ok else 'erro'}\n"
+        f"• DB: {'ok' if db_ok else 'erro'}\n"
+        f"• Redis: {'ok' if redis_ok else 'offline'}\n"
+        f"• Ollama: {'online' if ollama_ok else 'offline'}\n"
+        f"• Telegram user autorizado: {'sim' if telegram_user_ok else 'não'}\n"
+        f"• Default user: {'ok' if default_user_ok else 'ausente'} ({default_user_name})\n"
+        f"• Memórias: {memory_count}\n"
+        f"• Tarefas pendentes: {pending_tasks}"
+    )
+
+
 def format_journal_summary(journal) -> str:
     """Format today's journal for /resumo."""
     parts: list[str] = ["Resumo de hoje:"]

@@ -97,8 +97,8 @@ async def test_handle_free_text_after_db_reset(db_session) -> None:
     ):
         with patch("app.telegram.handlers.is_user_allowed", return_value=True):
             with patch(
-                "app.telegram.handlers.route_instructor_message",
-                new=AsyncMock(return_value="Entendo. Quer conversar sobre isso?"),
+                "app.telegram.instructor._try_llm_reply",
+                new=AsyncMock(return_value=None),
             ):
                 await handle_free_text(update, context)
 

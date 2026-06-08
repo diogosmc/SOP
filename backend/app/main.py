@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     setup_logging(settings.log_level)
     route_count = sum(1 for r in app.routes if hasattr(r, "path"))
     _logger.info(
-        "copiloto_started version=1.0.3 routes=%s auth=%s ai=/api/v1/ai/health",
+        "copiloto_started version=1.0.4 routes=%s auth=%s ai=/api/v1/ai/health",
         route_count,
         settings.auth_enabled,
     )
@@ -79,7 +79,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title=settings.app_name,
-        version="1.0.3",
+        version="1.0.4",
         lifespan=lifespan,
     )
 

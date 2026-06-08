@@ -127,57 +127,15 @@ async def route_instructor_message(
     *,
     chat_service_factory: Optional[ChatServiceFactory] = None,
     classify_func: Callable[[str], dict[str, Any]] | None = None,
+    skip_llm: bool = False,
 ) -> str:
-    """Classify and route a free-form Instructor message."""
-    classifier = classify_func or classify_message
-    classification = classifier(message)
-    intent = classification.get("intent", "general_chat")
+    """Classify and route a free-form Instructor message via the Jarvis pipeline."""
+    from app.telegram.instructor import process_telegram_message
 
-    memory_intents = {
-        "study_log",
-        "workout_log",
-        "expense_log",
-        "emotional_checkin",
-        "goal_update",
-        "habit_log",
-    }
-
-    if intent in memory_intents or classification.get("should_save_memory"):
-        await handle_memory_intent(db, user_id, message, classification)
-
-    if intent == "task_creation":
-        return await handle_task_intent(db, user_id, message, classification)
-
-    if intent == "study_log":
-        return await handle_note_intent(db, user_id, message, classification)
-
-    if intent == "expense_log":
-        return format_telegram_reply(
-            "Registrei o gasto na memória e no diário. "
-            "O módulo financeiro completo entrará em uma fase futura."
-        )
-
-    if intent == "workout_log":
-        return format_telegram_reply(
-            "Registrei seu treino na memória e no diário. "
-            "O módulo de treino completo entrará em uma fase futura."
-        )
-
-    if intent == "habit_log":
-        return format_telegram_reply(
-            "Anotado na memória e no diário. Posso te ajudar a acompanhar hábitos com mais detalhe em breve."
-        )
-
-    if intent == "goal_update":
-        return format_telegram_reply(
-            "Objetivo salvo na memória. Vou usar isso para te acompanhar."
-        )
-
-    if intent == "emotional_checkin":
-        return format_telegram_reply(
-            "Registrei como você está se sentindo hoje no diário. Estou aqui se quiser conversar."
-        )
-
-    return await handle_chat_fallback(
-        db, user_id, message, chat_service_factory=chat_service_factory
+    return await process_telegram_message(
+        db,
+        user_id,
+        message,
+        classify_func=classify_func,
+        skip_llm=skip_llm or chat_service_factory is not None,
     )

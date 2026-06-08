@@ -15,7 +15,7 @@ class TaskRepository:
         self.db = db
 
     async def create(self, user_id: uuid.UUID, data: TaskCreate) -> Task:
-        task = Task(user_id=user_id, **data.model_dump(mode="json"))
+        task = Task(user_id=user_id, **data.model_dump())
         self.db.add(task)
         await self.db.flush()
         await self.db.refresh(task)

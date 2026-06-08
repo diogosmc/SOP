@@ -49,11 +49,15 @@ async def update_daily_journal_from_message(
     """Incrementally update today's journal entry from a classified message."""
     if not classification.get("should_save_memory") and classification.get("intent") not in {
         "study_log",
+        "study_plan",
         "workout_log",
         "expense_log",
         "emotional_checkin",
         "goal_update",
         "habit_log",
+        "appointment",
+        "note_creation",
+        "task_creation",
     }:
         return
 
@@ -67,8 +71,11 @@ async def update_daily_journal_from_message(
     if intent == "emotional_checkin" or "emotional" in classification.get("categories", []):
         journal.mood_score = _mood_from_text(normalized)
 
-    if intent == "study_log" or "study" in classification.get("categories", []):
+    if intent in {"study_log", "study_plan"} or "study" in classification.get("categories", []):
         journal.study_summary = _append_summary(journal.study_summary, normalized)
+
+    if intent == "appointment":
+        journal.summary = _append_summary(journal.summary, f"Compromisso: {normalized}")
 
     if intent == "workout_log" or "workout" in classification.get("categories", []):
         journal.workout_summary = _append_summary(journal.workout_summary, normalized)
