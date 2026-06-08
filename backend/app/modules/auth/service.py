@@ -36,7 +36,7 @@ class AuthService:
         if await self.has_password_user():
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Bootstrap admin is no longer available",
+                detail="Admin já existe",
             )
         existing = await self.get_user_by_email(data.email)
         if existing is not None:

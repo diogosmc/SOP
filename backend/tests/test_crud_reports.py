@@ -52,7 +52,12 @@ async def test_analytics_structure(client: AsyncClient) -> None:
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_rule_insights(client: AsyncClient) -> None:
+async def test_rule_insights(client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    from app.core.config import get_settings
+
+    monkeypatch.setenv("CACHE_ENABLED", "false")
+    get_settings.cache_clear()
+
     for _ in range(12):
         await client.post(
             "/api/v1/tasks",
@@ -63,8 +68,7 @@ async def test_rule_insights(client: AsyncClient) -> None:
     assert response.status_code == 200
     data = response.json()["data"]
     assert data["source"] == "rules"
-    assert len(data["insights"]) >= 1
-    assert any("tarefa" in i.lower() for i in data["insights"])
+    assert "Você tem tarefas pendentes para organizar." in data["insights"]
 
 
 @pytest.mark.integration

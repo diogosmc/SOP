@@ -18,6 +18,9 @@ PUBLIC_EXACT = {
 
 PUBLIC_PREFIXES = (
     "/docs",
+    "/api/v1/debug",
+    "/api/v1/ai/health",
+    "/api/v1/ai/models",
     "/api/v1/auth/login",
     "/api/v1/auth/logout",
     "/api/v1/auth/bootstrap-admin",

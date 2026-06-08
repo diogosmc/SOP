@@ -1,17 +1,22 @@
-/** @param {{ navigate: (route: string) => void, state: import('./state.js').AppState }} ctx */
-export function renderSidebar({ navigate, state }) {
+/** @param {{ navigate: (route: string) => void, state: import('./state.js').AppState, onToggleCollapse?: () => void }} ctx */
+export function renderSidebar({ navigate, state, onToggleCollapse }) {
   const nav = document.createElement("nav");
   nav.className = "sidebar__inner";
 
-  nav.innerHTML = `
-    <div class="sidebar__brand">
-      <div class="sidebar__logo" aria-hidden="true">◆</div>
-      <div>
-        <p class="sidebar__title">COPILOTO</p>
-        <p class="sidebar__subtitle">Seu OS pessoal</p>
-      </div>
+  const brand = document.createElement("div");
+  brand.className = "sidebar__brand";
+  brand.innerHTML = `
+    <div class="sidebar__logo" aria-hidden="true">◆</div>
+    <div class="sidebar__brand-text">
+      <p class="sidebar__title">COPILOTO</p>
+      <p class="sidebar__subtitle">Seu OS pessoal</p>
     </div>
+    <button type="button" class="sidebar__collapse-btn" aria-label="${state.sidebarCollapsed ? "Expandir menu" : "Recolher menu"}" title="${state.sidebarCollapsed ? "Expandir" : "Recolher"}">${state.sidebarCollapsed ? "»" : "«"}</button>
   `;
+  brand.querySelector(".sidebar__collapse-btn")?.addEventListener("click", () => {
+    onToggleCollapse?.();
+  });
+  nav.appendChild(brand);
 
   const items = [
     { route: "/dashboard", label: "Dashboard", icon: "▣" },
@@ -37,10 +42,11 @@ export function renderSidebar({ navigate, state }) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "sidebar__link";
+    btn.title = item.label;
     if (state.route === item.route || (state.route === "/" && item.route === "/dashboard")) {
       btn.classList.add("sidebar__link--active");
     }
-    btn.innerHTML = `<span class="sidebar__icon" aria-hidden="true">${item.icon}</span><span>${item.label}</span>`;
+    btn.innerHTML = `<span class="sidebar__icon" aria-hidden="true">${item.icon}</span><span class="sidebar__label">${item.label}</span>`;
     btn.addEventListener("click", () => navigate(item.route));
     li.appendChild(btn);
     list.appendChild(li);
@@ -50,7 +56,7 @@ export function renderSidebar({ navigate, state }) {
 
   const footer = document.createElement("div");
   footer.className = "sidebar__footer";
-  footer.innerHTML = `<p class="sidebar__version">V1.0 · COPILOTO</p>`;
+  footer.innerHTML = `<p class="sidebar__version">V1.0.1</p>`;
   nav.appendChild(footer);
 
   return nav;

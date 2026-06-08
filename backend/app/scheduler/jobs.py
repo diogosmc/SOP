@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import logging
-import uuid
 
-from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.modules.reminders.service import ReminderService
+from app.modules.users.service import ensure_default_user_exists
 from app.scheduler.notifications import send_notification
 from app.scheduler.summaries import build_daily_summary, build_weekly_summary
 
@@ -21,15 +20,12 @@ CHECKIN_MESSAGES = {
 }
 
 
-def _default_user_id() -> uuid.UUID:
-    return uuid.UUID(get_settings().default_user_id)
-
-
 async def process_due_reminders() -> None:
     """Send notifications for pending reminders that are due."""
-    user_id = _default_user_id()
     try:
         async with AsyncSessionLocal() as db:
+            user = await ensure_default_user_exists(db)
+            user_id = user.id
             service = ReminderService(db)
             due = await service.get_due_reminders(user_id)
             for reminder in due:
@@ -57,10 +53,10 @@ async def send_checkin(period: str) -> None:
 
 async def send_daily_summary_job() -> None:
     """Build and send the daily summary."""
-    user_id = _default_user_id()
     try:
         async with AsyncSessionLocal() as db:
-            summary = await build_daily_summary(user_id, db)
+            user = await ensure_default_user_exists(db)
+            summary = await build_daily_summary(user.id, db)
             await db.commit()
         await send_notification(f"Resumo diário:\n\n{summary}")
         logger.info("daily_summary_job_completed")
@@ -70,10 +66,10 @@ async def send_daily_summary_job() -> None:
 
 async def send_weekly_summary_job() -> None:
     """Build and send the weekly summary."""
-    user_id = _default_user_id()
     try:
         async with AsyncSessionLocal() as db:
-            summary = await build_weekly_summary(user_id, db)
+            user = await ensure_default_user_exists(db)
+            summary = await build_weekly_summary(user.id, db)
             await db.commit()
         await send_notification(f"Resumo semanal:\n\n{summary}")
         logger.info("weekly_summary_job_completed")

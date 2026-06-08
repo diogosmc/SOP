@@ -7,11 +7,13 @@ from typing import AsyncGenerator
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.debug import router as debug_router
 from app.api.health import router as health_router
 from app.core.config import get_settings
 from app.core.logging import setup_logging
 from app.db.redis import close_redis
-from app.db.session import dispose_engine
+from app.db.session import AsyncSessionLocal, dispose_engine
+from app.modules.users.service import ensure_default_user_exists
 from app.middleware.error_handler import register_error_handlers
 from app.middleware.auth import AuthMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
@@ -39,6 +41,19 @@ _logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     settings = get_settings()
     setup_logging(settings.log_level)
+    route_count = sum(1 for r in app.routes if hasattr(r, "path"))
+    _logger.info(
+        "copiloto_started version=1.0.3 routes=%s auth=%s ai=/api/v1/ai/health",
+        route_count,
+        settings.auth_enabled,
+    )
+    try:
+        async with AsyncSessionLocal() as db:
+            await ensure_default_user_exists(db, settings)
+            await db.commit()
+        _logger.info("default_user_ready")
+    except Exception:
+        _logger.exception("default_user_bootstrap_failed")
     try:
         await start_telegram_bot()
     except Exception:
@@ -64,7 +79,7 @@ def create_app() -> FastAPI:
     settings = get_settings()
     app = FastAPI(
         title=settings.app_name,
-        version="1.0.0",
+        version="1.0.3",
         lifespan=lifespan,
     )
 
@@ -82,7 +97,9 @@ def create_app() -> FastAPI:
     app.add_middleware(AuthMiddleware)
 
     app.include_router(health_router)
+    app.include_router(debug_router, prefix="/api/v1")
     app.include_router(auth_router, prefix="/api/v1")
+    app.include_router(ai_router, prefix="/api/v1")
     app.include_router(tasks_router, prefix="/api/v1")
     app.include_router(habits_router, prefix="/api/v1")
     app.include_router(notes_router, prefix="/api/v1")
@@ -91,7 +108,6 @@ def create_app() -> FastAPI:
     app.include_router(workout_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
     app.include_router(reminders_router, prefix="/api/v1")
-    app.include_router(ai_router, prefix="/api/v1")
     app.include_router(chat_router, prefix="/api/v1")
     app.include_router(memory_router, prefix="/api/v1")
     app.include_router(websocket_chat_router)

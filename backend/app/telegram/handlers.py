@@ -3,22 +3,23 @@
 from __future__ import annotations
 
 import logging
-import uuid
 
+from sqlalchemy.exc import IntegrityError
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
+from app.modules.users.service import ensure_default_user_exists
 from app.telegram.formatter import format_telegram_reply
 from app.telegram.security import UNAUTHORIZED_MESSAGE, is_user_allowed
 from app.telegram.tools import route_instructor_message
 
 logger = logging.getLogger(__name__)
 
-
-def _app_user_id() -> uuid.UUID:
-    return uuid.UUID(get_settings().default_user_id)
+_DEFAULT_USER_MISSING_MESSAGE = (
+    "Não consegui salvar sua mensagem porque o usuário padrão não está configurado. "
+    "Execute a correção de usuário padrão."
+)
 
 
 async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -36,12 +37,15 @@ async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     if not text:
         return
 
-    user_id = _app_user_id()
     try:
         async with AsyncSessionLocal() as db:
-            reply = await route_instructor_message(db, user_id, text)
+            user = await ensure_default_user_exists(db)
+            reply = await route_instructor_message(db, user.id, text)
             await db.commit()
         await message.reply_text(format_telegram_reply(reply))
+    except IntegrityError:
+        logger.exception("telegram_instructor_integrity_error")
+        await message.reply_text(format_telegram_reply(_DEFAULT_USER_MISSING_MESSAGE))
     except Exception:
         logger.exception("telegram_instructor_failed")
         await message.reply_text(

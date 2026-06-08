@@ -209,8 +209,8 @@ class ReportsService:
         elif workouts_week >= 3:
             rule_insights.append(f"Boa consistência: {workouts_week} treinos registrados esta semana.")
 
-        if pending >= 8:
-            rule_insights.append(f"Você tem {pending} tarefas pendentes — considere priorizar.")
+        if pending > 0:
+            rule_insights.append("Você tem tarefas pendentes para organizar.")
 
         daily = await self.daily_report(user_id, today)
         if daily.tasks_completed > 0:

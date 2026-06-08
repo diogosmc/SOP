@@ -1,6 +1,6 @@
 # COPILOTO
 
-**Sistema Operacional Pessoal Inteligente** — V1
+**Sistema Operacional Pessoal Inteligente** — V1.0.1
 
 Assistente pessoal local-first: tarefas, hábitos, notas, finanças, estudos, treino, chat com IA (Ollama), RAG, memória evolutiva, Telegram, relatórios e dashboard web.
 
@@ -84,6 +84,9 @@ Containers: `copiloto_postgres`, `copiloto_redis`.
 
 ### 3. Backend
 
+> **Importante:** execute sempre a partir da pasta `backend/`:
+> `uvicorn app.main:app --reload --host 0.0.0.0 --port 8000`
+
 ```bash
 cd backend
 pip install -r requirements.txt
@@ -93,15 +96,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ### 4. Modelos Ollama
 
-Em outro terminal:
+Em outro terminal (se `ollama serve` já estiver rodando, pule o primeiro comando):
 
 ```bash
 ollama serve
-ollama pull llama3.2:3b
-ollama pull mistral:7b-instruct
+ollama pull qwen3:4b
+ollama pull mistral:7b
 ollama pull nomic-embed-text
 ollama list
 ```
+
+Defaults no `.env`: `qwen3:4b` (fast), `mistral:7b` (main), `nomic-embed-text` (embed). O Ollama aceita `nomic-embed-text:latest` automaticamente.
 
 ### 5. Frontend
 
@@ -119,13 +124,25 @@ Abra: **http://localhost:5173**
 ./scripts/check_health.sh
 ```
 
-Ou manualmente:
+Ou manualmente (bash):
 
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/api/v1/health
 curl http://localhost:8000/api/v1/ai/health
+curl http://localhost:8000/api/v1/debug/routes
 ```
+
+**PowerShell (Windows):**
+
+```powershell
+Invoke-RestMethod -Uri "http://localhost:8000/health"
+Invoke-RestMethod -Uri "http://localhost:8000/api/v1/health"
+Invoke-RestMethod -Uri "http://localhost:8000/api/v1/ai/health"
+Invoke-RestMethod -Uri "http://localhost:8000/api/v1/debug/routes"
+```
+
+Se `/api/v1/ai/health` retornar 404, o backend está desatualizado ou foi iniciado fora de `backend/`. Reinicie com o comando acima.
 
 ---
 
@@ -181,14 +198,16 @@ Uso pessoal na rede Tailscale (sem expor à internet pública):
 ## Telegram
 
 1. Crie bot em [@BotFather](https://t.me/BotFather)
-2. Obtenha seu ID em [@userinfobot](https://t.me/userinfobot)
-3. Configure `.env`:
+2. Para descobrir seu Telegram ID, converse com [@userinfobot](https://t.me/userinfobot)
+3. Configure `.env` (substitua pelo seu ID numérico real — **não** use `SEU_ID`):
    ```env
    TELEGRAM_ENABLED=true
    TELEGRAM_BOT_TOKEN=...
-   TELEGRAM_ALLOWED_USER_ID=...
+   TELEGRAM_ALLOWED_USER_ID=123456789
    ```
 4. Reinicie o backend
+
+Com `TELEGRAM_ALLOWED_USER_ID` vazio, `SEU_ID` ou inválido, o bot **não inicia** (log: `TELEGRAM_ALLOWED_USER_ID inválido`).
 
 Detalhes: [docs/telegram.md](docs/telegram.md)
 
@@ -211,6 +230,26 @@ COOKIE_SECURE=false
 3. Login → cookies HttpOnly (`access_token`, `refresh_token`)
 
 Endpoints: `/api/v1/auth/login`, `/logout`, `/refresh`, `/me`, `/bootstrap-admin`
+
+**Bootstrap admin (PowerShell):**
+
+```powershell
+Invoke-RestMethod `
+  -Method POST `
+  -Uri "http://localhost:8000/api/v1/auth/bootstrap-admin" `
+  -ContentType "application/json" `
+  -Body '{"name":"Admin","email":"admin@copiloto.local","password":"senha123"}'
+```
+
+Alternativa com `curl.exe`:
+
+```powershell
+curl.exe -X POST "http://localhost:8000/api/v1/auth/bootstrap-admin" `
+  -H "Content-Type: application/json" `
+  -d "{\"name\":\"Admin\",\"email\":\"admin@copiloto.local\",\"password\":\"senha123\"}"
+```
+
+Se admin já existir, retorna `403` com `"Admin já existe"`.
 
 ---
 

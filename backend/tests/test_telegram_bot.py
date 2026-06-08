@@ -27,8 +27,21 @@ def test_should_start_bot_missing_token() -> None:
 
 
 def test_should_start_bot_enabled_with_token() -> None:
-    settings = Settings(telegram_enabled=True, telegram_bot_token="abc123")
+    settings = Settings(
+        telegram_enabled=True,
+        telegram_bot_token="abc123",
+        telegram_allowed_user_id="123456789",
+    )
     assert should_start_bot(settings) is True
+
+
+def test_should_start_bot_invalid_user_id_placeholder() -> None:
+    settings = Settings(
+        telegram_enabled=True,
+        telegram_bot_token="abc123",
+        telegram_allowed_user_id="SEU_ID",
+    )
+    assert should_start_bot(settings) is False
 
 
 def test_unauthorized_user_blocked() -> None:

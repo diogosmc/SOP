@@ -77,9 +77,16 @@ async function renderCurrentPage() {
 function updateChrome() {
   const sidebarRoot = document.getElementById("sidebar-root");
   const headerRoot = document.getElementById("header-root");
+  const appShell = document.getElementById("app");
+  if (appShell) {
+    appShell.classList.toggle("sidebar-collapsed", state.sidebarCollapsed);
+  }
   if (sidebarRoot) {
+    sidebarRoot.classList.toggle("sidebar--collapsed", state.sidebarCollapsed);
     sidebarRoot.innerHTML = "";
-    sidebarRoot.appendChild(renderSidebar({ navigate, state }));
+    sidebarRoot.appendChild(
+      renderSidebar({ navigate, state, onToggleCollapse: toggleSidebarCollapse })
+    );
   }
   if (headerRoot) {
     headerRoot.innerHTML = "";
@@ -117,6 +124,10 @@ export function initRouter() {
 
 async function bootstrapAuth() {
   const setup = await getAuthBootstrapAvailable();
+  if (!setup.ok && setup.status === 404) {
+    setState({ authEnabled: false, authChecked: true, user: null });
+    return;
+  }
   const authEnabled = setup.ok ? Boolean(setup.data?.auth_enabled) : false;
   setState({ authEnabled, authChecked: true });
 
@@ -126,11 +137,22 @@ async function bootstrapAuth() {
   }
 
   const me = await getAuthMe();
+  if (!me.ok && me.status === 404) {
+    setState({ authEnabled: false, user: null });
+    return;
+  }
   if (me.ok) {
     setState({ user: me.data });
   } else {
     setState({ user: null });
   }
+}
+
+export function toggleSidebarCollapse() {
+  const next = !state.sidebarCollapsed;
+  setState({ sidebarCollapsed: next });
+  localStorage.setItem("copiloto_sidebar_collapsed", next ? "true" : "false");
+  updateChrome();
 }
 
 export function updateSidebarVisibility() {

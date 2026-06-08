@@ -82,6 +82,21 @@ async function loadDashboardData(grid) {
   const redisStatus =
     detailedHealth.ok && detailedHealth.data?.redis ? "online" : "offline";
   const ollamaStatus = aiHealth.ok && aiHealth.data?.ollama ? "online" : "offline";
+  const ollamaSubtitle = (() => {
+    if (ollamaStatus === "online") {
+      const names = aiHealth.data?.models || [];
+      const missing = aiHealth.data?.missing_models || [];
+      const base = `${names.length} modelos`;
+      return missing.length ? `${base} · faltando: ${missing.join(", ")}` : base;
+    }
+    if (aiHealth.status === 404) {
+      return aiHealth.error || "Rota AI Health não encontrada no backend.";
+    }
+    if (aiHealth.ok && aiHealth.data?.ollama === false) {
+      return aiHealth.data?.error || "Ollama inacessível em " + (aiHealth.data?.base_url || "localhost:11434");
+    }
+    return aiHealth.error || "IA local indisponível";
+  })();
 
   const memoryCount = memories.ok && memories.data ? memories.data.total : null;
   const pendingReminders = reminders.ok && reminders.data ? reminders.data.total : null;
@@ -158,10 +173,7 @@ async function loadDashboardData(grid) {
     createCard({
       title: "Ollama",
       value: ollamaStatus === "online" ? "Online" : "Offline",
-      subtitle:
-        ollamaStatus === "online"
-          ? `${(aiHealth.data?.models || []).length} modelos`
-          : aiHealth.error || "IA local indisponível",
+      subtitle: ollamaSubtitle,
       status: ollamaStatus,
       icon: "🤖",
     }),

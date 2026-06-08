@@ -12,6 +12,7 @@ def test_settings_load_defaults() -> None:
     assert settings.redis_url.startswith("redis://")
     assert settings.timezone == "America/Sao_Paulo"
     assert settings.ollama_base_url == "http://localhost:11434"
+    assert settings.sqlalchemy_echo is False
 
 
 def test_settings_cached_singleton() -> None:

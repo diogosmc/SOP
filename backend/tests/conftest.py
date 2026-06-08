@@ -5,7 +5,6 @@ from collections.abc import AsyncGenerator
 
 import pytest
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
@@ -13,7 +12,7 @@ import app.db.models  # noqa: F401 — register all ORM mappers
 from app.core.config import get_settings
 from app.core.deps import get_current_user_id, get_db
 from app.main import app
-from app.modules.users.models import User
+from app.modules.users.service import ensure_default_user_exists
 
 _test_engine = create_async_engine(
     get_settings().database_url,
@@ -38,19 +37,10 @@ def postgres_url() -> str:
 @pytest.fixture
 async def default_user_id() -> uuid.UUID:
     settings = get_settings()
-    user_id = uuid.UUID(settings.default_user_id)
     async with TestSessionLocal() as session:
-        result = await session.execute(select(User).where(User.id == user_id))
-        if result.scalar_one_or_none() is None:
-            session.add(
-                User(
-                    id=user_id,
-                    name="Test User",
-                    email="test@copiloto.local",
-                )
-            )
-            await session.commit()
-    return user_id
+        user = await ensure_default_user_exists(session, settings)
+        await session.commit()
+    return user.id
 
 
 @pytest.fixture

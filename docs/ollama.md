@@ -6,16 +6,16 @@ Configuração de IA local via [Ollama](https://ollama.com).
 
 | Papel | Modelo | Uso |
 |-------|--------|-----|
-| Fast | `llama3.2:3b` | Chat curto, comandos, respostas rápidas |
-| Main | `mistral:7b-instruct` | Análises, planejamento, mensagens longas |
+| Fast | `qwen3:4b` | Chat curto, respostas rápidas |
+| Main | `mistral:7b` | Análises e mensagens complexas |
 | Embed | `nomic-embed-text` | RAG e busca semântica (768 dims) |
 
 Instalação:
 
 ```bash
 ollama serve
-ollama pull llama3.2:3b
-ollama pull mistral:7b-instruct
+ollama pull qwen3:4b
+ollama pull mistral:7b
 ollama pull nomic-embed-text
 ollama list
 ```
@@ -24,8 +24,8 @@ ollama list
 
 ```env
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL_FAST=llama3.2:3b
-OLLAMA_MODEL_MAIN=mistral:7b-instruct
+OLLAMA_MODEL_FAST=qwen3:4b
+OLLAMA_MODEL_MAIN=mistral:7b
 OLLAMA_MODEL_EMBED=nomic-embed-text
 OLLAMA_CONTEXT_SIZE=4096
 OLLAMA_KEEP_ALIVE=5m

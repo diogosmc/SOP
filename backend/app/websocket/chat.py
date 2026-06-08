@@ -11,6 +11,7 @@ from app.core.config import get_settings
 from app.core.security import TOKEN_TYPE_ACCESS, decode_token
 from app.db.session import AsyncSessionLocal
 from app.modules.chat.models import ChatOrigin
+from app.modules.users.service import ensure_default_user_exists
 from app.modules.chat.schemas import ChatMessageRequest
 from app.modules.chat.service import ChatService, ChatStreamError
 from app.websocket.manager import ConnectionManager
@@ -27,11 +28,8 @@ def _parse_cookie(header: str, name: str) -> Optional[str]:
     return None
 
 
-def _resolve_user_id(websocket: WebSocket) -> Optional[uuid.UUID]:
+def _resolve_authenticated_user_id(websocket: WebSocket) -> Optional[uuid.UUID]:
     settings = get_settings()
-    if not settings.auth_enabled:
-        return uuid.UUID(settings.default_user_id)
-
     cookie_header = websocket.headers.get("cookie", "")
     token = _parse_cookie(cookie_header, "access_token")
     if not token:
@@ -77,11 +75,19 @@ def _parse_chat_request(data: dict[str, Any]) -> Optional[ChatMessageRequest]:
 @router.websocket("/ws/chat")
 async def chat_websocket(websocket: WebSocket) -> None:
     connection_id = await manager.connect(websocket)
-    user_id = _resolve_user_id(websocket)
-    if user_id is None:
-        await websocket.close(code=4401)
-        manager.disconnect(connection_id)
-        return
+    settings = get_settings()
+
+    if settings.auth_enabled:
+        user_id = _resolve_authenticated_user_id(websocket)
+        if user_id is None:
+            await websocket.close(code=4401)
+            manager.disconnect(connection_id)
+            return
+    else:
+        async with AsyncSessionLocal() as db:
+            user = await ensure_default_user_exists(db)
+            user_id = user.id
+            await db.commit()
 
     try:
         while True:

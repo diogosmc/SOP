@@ -5,6 +5,7 @@ from typing import Any
 from fastapi import APIRouter
 from pydantic import BaseModel, Field
 
+from app.ai.model_utils import extract_model_names, find_missing_models
 from app.ai.ollama import OllamaError, check_ollama_health, list_models
 from app.ai.router import choose_model
 from app.core.config import get_settings
@@ -21,12 +22,19 @@ class RouteTestRequest(BaseModel):
 
 @router.get("/health")
 async def ai_health() -> APIResponse[dict[str, Any]]:
-    """Check Ollama connectivity and list available models."""
+    """Check Ollama connectivity and configured models."""
     settings = get_settings()
+    configured = {
+        "fast": settings.ollama_model_fast,
+        "main": settings.ollama_model_main,
+        "embed": settings.ollama_model_embed,
+    }
     data: dict[str, Any] = {
         "ollama": False,
         "base_url": settings.ollama_base_url,
         "models": [],
+        "configured": configured,
+        "missing_models": list(configured.values()),
     }
 
     healthy = await check_ollama_health()
@@ -36,9 +44,13 @@ async def ai_health() -> APIResponse[dict[str, Any]]:
 
     data["ollama"] = True
     try:
-        data["models"] = await list_models()
+        raw_models = await list_models()
+        installed = extract_model_names(raw_models)
+        data["models"] = installed
+        data["missing_models"] = find_missing_models(configured, installed)
     except OllamaError as exc:
         data["error"] = str(exc)
+        data["missing_models"] = []
 
     return APIResponse(data=data)
 
@@ -58,7 +70,8 @@ async def ai_models() -> APIResponse[dict[str, Any]]:
         )
 
     try:
-        models = await list_models()
+        raw_models = await list_models()
+        installed = extract_model_names(raw_models)
     except OllamaError as exc:
         return APIResponse(
             data={
@@ -73,7 +86,7 @@ async def ai_models() -> APIResponse[dict[str, Any]]:
         data={
             "ollama": True,
             "base_url": settings.ollama_base_url,
-            "models": models,
+            "models": installed,
         }
     )
 

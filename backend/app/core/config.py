@@ -20,9 +20,11 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "COPILOTO"
+    app_env: str = "development"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     debug: bool = False
+    sqlalchemy_echo: bool = False
     database_url: str = Field(
         default="postgresql+asyncpg://copiloto:change_me_secure_password@localhost:5432/copiloto"
     )
@@ -31,8 +33,8 @@ class Settings(BaseSettings):
     timezone: str = "America/Sao_Paulo"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model_fast: str = "llama3.2:3b"
-    ollama_model_main: str = "mistral:7b-instruct"
+    ollama_model_fast: str = "qwen3:4b"
+    ollama_model_main: str = "mistral:7b"
     ollama_model_embed: str = "nomic-embed-text"
     ollama_context_size: int = 4096
     ollama_keep_alive: str = "5m"

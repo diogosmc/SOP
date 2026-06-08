@@ -22,6 +22,10 @@ Bot **Instructor**: classifica mensagens, atualiza memória/diário e responde v
    TELEGRAM_ALLOWED_USER_ID=123456789
    ```
 
+   Para descobrir seu Telegram ID, converse com [@userinfobot](https://t.me/userinfobot).
+
+   **Não use** `SEU_ID` ou placeholders — o bot não inicia com ID inválido.
+
 Somente esse usuário pode usar o bot (segurança V1).
 
 ### 3. Reiniciar backend

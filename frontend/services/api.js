@@ -16,15 +16,26 @@ function isRetryableStatus(status) {
   return status === 0 || status === 502 || status === 503 || status === 504;
 }
 
-function buildErrorMessage(payload, status) {
+/** @returns {string} */
+function contextualError(path, status, message) {
+  if (status === 404 && path.includes("/ai/health")) {
+    return "Rota AI Health não encontrada no backend. Reinicie: cd backend && uvicorn app.main:app --reload --port 8000";
+  }
+  if (status === 404 && path.includes("/auth/")) {
+    return "Rotas de autenticação não encontradas no backend (auth ausente ou backend desatualizado).";
+  }
+  return message;
+}
+
+function buildErrorMessage(payload, status, path = "") {
   if (status === 401) return "Sessão expirada. Faça login novamente.";
   if (status >= 500) return "Erro interno do servidor. Tente novamente.";
   if (status === 0) return "Servidor indisponível ou sem conexão.";
-  return (
+  const base =
     payload?.error?.message ||
     payload?.detail ||
-    `Erro HTTP ${status}`
-  );
+    `Erro HTTP ${status}`;
+  return contextualError(path, status, String(base));
 }
 
 /**
@@ -85,7 +96,7 @@ export async function request(path, options = {}) {
         const result = {
           ok: false,
           data: null,
-          error: String(buildErrorMessage(payload, response.status)),
+          error: String(buildErrorMessage(payload, response.status, path)),
           status: response.status,
         };
         const maxRetries = options.retries ?? MAX_GET_RETRIES;

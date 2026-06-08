@@ -69,8 +69,8 @@ Guia rápido para problemas comuns. Para instalação completa, veja o [README](
    ```
 2. Instale modelos (veja [ollama.md](ollama.md)):
    ```bash
-   ollama pull llama3.2:3b
-   ollama pull mistral:7b-instruct
+   ollama pull qwen3:4b
+   ollama pull mistral:7b
    ollama pull nomic-embed-text
    ```
 3. Confira `OLLAMA_BASE_URL=http://localhost:11434`

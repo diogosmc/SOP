@@ -7,6 +7,7 @@
  * @property {{ id: string, name: string, email: string, is_admin: boolean }|null} user
  * @property {string} route
  * @property {boolean} sidebarOpen
+ * @property {boolean} sidebarCollapsed
  * @property {ServiceStatus} apiStatus
  * @property {ServiceStatus} databaseStatus
  * @property {ServiceStatus} redisStatus
@@ -21,6 +22,7 @@
 export const state = {
   route: "/dashboard",
   sidebarOpen: false,
+  sidebarCollapsed: localStorage.getItem("copiloto_sidebar_collapsed") === "true",
   apiStatus: "unknown",
   databaseStatus: "unknown",
   redisStatus: "unknown",
