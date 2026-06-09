@@ -53,6 +53,16 @@ _EMOTIONAL_MARKERS = (
     "sem vontade",
 )
 
+_FINANCE_GOAL_MARKERS = (
+    "final do mes",
+    "final do mês",
+    "nao posso gastar",
+    "não posso gastar",
+    "juntar dinheiro",
+    "comprar moto",
+    "meu objetivo",
+)
+
 
 def is_ack_message(message: str) -> bool:
     normalized = message.strip().lower().rstrip(".! ")
@@ -134,6 +144,10 @@ async def update_state_from_message(
         row.conversation_mode = "organização"
         if primary == "routine_planning" and "emotional_checkin" not in secondary:
             pass
+    elif primary == "goal_update" or any(m in lowered for m in _FINANCE_GOAL_MARKERS):
+        row.conversation_mode = "normal"
+        if "moto" in lowered or "juntar" in lowered:
+            row.current_topic = "finanças"
     elif primary == "emotional_checkin" or (
         "emotional_checkin" in secondary
         and primary not in _EXPLICIT_PRODUCTIVITY_INTENTS

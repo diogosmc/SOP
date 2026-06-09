@@ -15,7 +15,7 @@ def test_model_is_available_with_latest_suffix() -> None:
 
 
 def test_find_missing_models() -> None:
-    installed = ["qwen3:4b", "mistral:7b"]
-    configured = {"fast": "qwen3:4b", "main": "mistral:7b", "embed": "nomic-embed-text"}
+    installed = ["qwen2.5:1.5b", "mistral:7b"]
+    configured = {"fast": "qwen2.5:1.5b", "main": "mistral:7b", "embed": "nomic-embed-text"}
     missing = find_missing_models(configured, installed)
     assert missing == ["nomic-embed-text"]

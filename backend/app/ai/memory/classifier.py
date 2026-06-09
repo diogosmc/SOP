@@ -6,6 +6,12 @@ import re
 from typing import Any
 
 _AMOUNT_RE = re.compile(r"(?:r\$\s*)?(\d+(?:[.,]\d{1,2})?)", re.IGNORECASE)
+_TIME_AMOUNT_RE = re.compile(
+    r"\d{1,2}:\d{2}|\d{1,2}\s*h\s*\d{0,2}|acordar|acordar|acodar|da manh|da tarde|da noite",
+    re.IGNORECASE,
+)
+
+_FINANCE_KEYWORDS = ("gastei", "paguei", "comprei", "despesa", "gasto de", "r$", " reais")
 
 _TRIVIAL_EXACT = frozenset(
     {
@@ -30,7 +36,18 @@ _TRIVIAL_EXACT = frozenset(
 _KEYWORD_RULES: list[tuple[str, tuple[str, ...], list[str]]] = [
     (
         "goal_update",
-        ("quero passar", "meu objetivo", "meta de", "pretendo", "quero ser", "sonho em"),
+        (
+            "quero passar",
+            "meu objetivo",
+            "meta de",
+            "pretendo",
+            "quero ser",
+            "sonho em",
+            "quero juntar",
+            "juntar dinheiro",
+            "comprar moto",
+            "comprar minha moto",
+        ),
         ["goal"],
     ),
     (
@@ -47,16 +64,10 @@ _KEYWORD_RULES: list[tuple[str, tuple[str, ...], list[str]]] = [
         "study_log",
         (
             "estudei",
-            "estudo",
             "dificuldade em",
             "aprendi",
-            "revisei",
-            "matéria",
-            "materia",
-            "física",
-            "fisica",
-            "matemática",
-            "matematica",
+            "revisei hoje",
+            "estudei hoje",
         ),
         ["study"],
     ),
@@ -140,7 +151,14 @@ def classify_message(text: str) -> dict[str, Any]:
         result["should_save_memory"] = False
 
     amount_match = _AMOUNT_RE.search(normalized)
-    if amount_match and result["intent"] in {"expense_log", "general_chat"}:
+    has_finance = any(kw in lowered for kw in _FINANCE_KEYWORDS)
+    looks_like_time = bool(_TIME_AMOUNT_RE.search(lowered))
+    if (
+        amount_match
+        and has_finance
+        and not looks_like_time
+        and result["intent"] in {"expense_log", "general_chat"}
+    ):
         if result["intent"] == "general_chat":
             result["intent"] = "expense_log"
             result["categories"] = ["finance"]

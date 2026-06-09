@@ -2,6 +2,14 @@
 
 from __future__ import annotations
 
+import html
+import re
+from typing import Any
+
+_BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
+_ITALIC_RE = re.compile(r"(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)", re.DOTALL)
+_CODE_RE = re.compile(r"`([^`]+)`")
+
 
 def truncate_paragraphs(text: str, max_paragraphs: int = 3) -> str:
     """Limit reply length to at most N paragraphs."""
@@ -15,8 +23,57 @@ def truncate_paragraphs(text: str, max_paragraphs: int = 3) -> str:
 
 
 def format_telegram_reply(text: str) -> str:
-    """Format a short Telegram reply in Portuguese."""
+    """Plain Telegram reply text (no parse mode)."""
     return truncate_paragraphs(text)[:4000]
+
+
+def markdown_to_telegram_html(text: str) -> str:
+    """Convert simple **bold**, *italic* and `code` to Telegram HTML."""
+    if not text:
+        return ""
+
+    placeholders: list[str] = []
+
+    def _stash(match: re.Match[str], tag: str) -> str:
+        inner = html.escape(match.group(1), quote=False)
+        token = f"\x00FMT{len(placeholders)}\x00"
+        placeholders.append(f"<{tag}>{inner}</{tag}>")
+        return token
+
+    working = html.escape(text, quote=False)
+    working = _BOLD_RE.sub(lambda m: _stash(m, "b"), working)
+    working = _ITALIC_RE.sub(lambda m: _stash(m, "i"), working)
+    working = _CODE_RE.sub(lambda m: _stash(m, "code"), working)
+
+    for idx, replacement in enumerate(placeholders):
+        working = working.replace(f"\x00FMT{idx}\x00", replacement)
+    return working
+
+
+def telegram_reply_kwargs(text: str, *, html: bool = True) -> dict[str, Any]:
+    """Build kwargs for reply_text / edit_text with optional HTML formatting."""
+    plain = format_telegram_reply(text)
+    if not html:
+        return {"text": plain}
+    return {"text": markdown_to_telegram_html(plain), "parse_mode": "HTML"}
+
+
+async def reply_telegram(message: Any, text: str, *, html: bool = True) -> Any:
+    """Send reply; fall back to plain text if HTML parsing fails."""
+    kwargs = telegram_reply_kwargs(text, html=html)
+    try:
+        return await message.reply_text(**kwargs)
+    except Exception:
+        return await message.reply_text(format_telegram_reply(text))
+
+
+async def edit_telegram(message: Any, text: str, *, html: bool = True) -> None:
+    """Edit message; fall back to plain text if HTML parsing fails."""
+    kwargs = telegram_reply_kwargs(text, html=html)
+    try:
+        await message.edit_text(**kwargs)
+    except Exception:
+        await message.edit_text(format_telegram_reply(text))
 
 
 def format_status_message(

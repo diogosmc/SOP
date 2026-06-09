@@ -14,7 +14,7 @@ WARMUP_TIMEOUT_SECONDS = 20.0
 
 
 async def warmup_ollama_fast_model() -> bool:
-    """Load qwen3:4b with a short prompt. Returns True on success."""
+    """Load the fast chat model with a short prompt. Returns True on success."""
     settings = get_settings()
     if not settings.telegram_llm_warmup:
         return False

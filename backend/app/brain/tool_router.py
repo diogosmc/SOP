@@ -32,7 +32,9 @@ def decide_actions(
                 BrainAction(action="update_journal", params={"message": message}),
             ]
         )
-        if entities.get("remind_at") or entities.get("title"):
+        if context.classification.get("explicit_appointment") and (
+            entities.get("remind_at") or entities.get("title")
+        ):
             actions.append(
                 BrainAction(
                     action="create_reminder",
@@ -54,20 +56,29 @@ def decide_actions(
             )
 
     elif intent in {"study_plan", "task_creation"}:
-        actions.extend(
-            [
-                BrainAction(
-                    action="create_task",
-                    params={
-                        "title": entities.get("title", message[:120]),
-                        "due_date": entities.get("remind_at"),
-                        "category": "estudo" if intent == "study_plan" else None,
-                    },
-                ),
-                BrainAction(action="update_journal", params={"message": message}),
-                BrainAction(action="create_memory", params={"content": message}),
-            ]
-        )
+        deferral = context.classification.get("study_deferral", False)
+        if deferral:
+            actions.extend(
+                [
+                    BrainAction(action="create_memory", params={"content": message}),
+                    BrainAction(action="update_journal", params={"message": message}),
+                ]
+            )
+        else:
+            actions.extend(
+                [
+                    BrainAction(
+                        action="create_task",
+                        params={
+                            "title": entities.get("title", message[:120]),
+                            "due_date": entities.get("remind_at"),
+                            "category": "estudo" if intent == "study_plan" else None,
+                        },
+                    ),
+                    BrainAction(action="update_journal", params={"message": message}),
+                    BrainAction(action="create_memory", params={"content": message}),
+                ]
+            )
 
     elif intent == "study_log":
         actions.extend(

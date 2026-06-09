@@ -2,33 +2,38 @@
 
 from __future__ import annotations
 
+from app.brain.schedule_builder import is_tomorrow_list_request
 from app.brain.schemas import ConversationContext
 from app.brain.state_manager import is_ack_message
 
-_FALLBACK_INTENTS = frozenset(
-    {
-        "expense_log",
-        "note_creation",
-        "task_creation",
-        "workout_log",
-        "study_log",
-    }
-)
+_FINANCE_KEYWORDS = ("gastei", "paguei", "comprei", "despesa", "gasto de", "r$", " reais")
 
-_LLM_INTENTS = frozenset(
-    {
-        "emotional_checkin",
-        "general_chat",
-        "planning_request",
-        "routine_planning",
-        "question",
-    }
-)
+
+def _has_finance_keyword(message: str) -> bool:
+    lowered = message.lower()
+    return any(kw in lowered for kw in _FINANCE_KEYWORDS)
+
+
+def _is_explicit_command(message: str, primary: str) -> bool:
+    """Only skip LLM for short, unambiguous action messages."""
+    lowered = message.lower().strip()
+    if primary == "expense_log":
+        return _has_finance_keyword(message)
+    if primary == "note_creation":
+        return lowered.startswith(("anota ", "anotar ", "anota:", "anotar:"))
+    if primary == "workout_log":
+        return any(w in lowered for w in ("treinei", "malhei", "corri km", "vou treinar"))
+    if primary == "study_log":
+        return any(w in lowered for w in ("estudei", "revisei hoje", "estudei hoje"))
+    return False
 
 
 def should_use_llm(message: str, context: ConversationContext, mode: str) -> bool:
     """Decide whether to call Ollama for this Telegram message."""
     if context.is_ack or is_ack_message(message):
+        return False
+
+    if is_tomorrow_list_request(message):
         return False
 
     if mode == "fallback_only":
@@ -37,21 +42,8 @@ def should_use_llm(message: str, context: ConversationContext, mode: str) -> boo
         return True
 
     primary = context.primary_intent or context.intent
-    secondary = context.secondary_intents or []
 
-    if primary in _FALLBACK_INTENTS and not secondary:
+    if _is_explicit_command(message, primary):
         return False
 
-    if primary in _LLM_INTENTS:
-        return True
-
-    if secondary:
-        return True
-
-    if primary == "appointment" and "emotional_checkin" in secondary:
-        return True
-
-    if primary == "study_plan":
-        return "emotional_checkin" in secondary
-
-    return primary in {"general_chat", "question"}
+    return True

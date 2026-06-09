@@ -8,6 +8,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.brain.companion import filter_memories_for_message
 from app.brain.memory_selector import select_important_memories, select_relevant_memories
 from app.brain.schemas import ConversationContext, ConversationState
 from app.brain.state_manager import get_or_create_user_state, is_ack_message
@@ -161,8 +162,12 @@ async def build_conversation_context(
         recent_limit = settings.brain_recent_messages_limit
         max_chars = settings.brain_context_max_chars
 
-    important = await select_important_memories(db, user_id, memory_limit)
-    relevant = await select_relevant_memories(db, user_id, message, memory_limit)
+    important = filter_memories_for_message(
+        message, await select_important_memories(db, user_id, memory_limit)
+    )
+    relevant = filter_memories_for_message(
+        message, await select_relevant_memories(db, user_id, message, memory_limit)
+    )
     recent = await _recent_messages(db, user_id, recent_limit)
 
     context = ConversationContext(

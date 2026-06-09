@@ -23,11 +23,14 @@ def _get_settings() -> Settings:
     return get_settings()
 
 
-def _build_client(settings: Settings | None = None) -> httpx.AsyncClient:
+def _build_client(
+    settings: Settings | None = None,
+    timeout_seconds: float | None = None,
+) -> httpx.AsyncClient:
     cfg = settings or _get_settings()
     return httpx.AsyncClient(
         base_url=cfg.ollama_base_url.rstrip("/"),
-        timeout=cfg.ollama_timeout_seconds,
+        timeout=timeout_seconds if timeout_seconds is not None else cfg.ollama_timeout_seconds,
     )
 
 
@@ -108,6 +111,8 @@ async def ollama_chat(
     messages: list[dict[str, str]],
     model: str | None = None,
     options: dict[str, Any] | None = None,
+    *,
+    timeout_seconds: float | None = None,
 ) -> dict[str, Any]:
     """Run a chat completion against Ollama /api/chat."""
     cfg = _get_settings()
@@ -120,7 +125,7 @@ async def ollama_chat(
     }
 
     try:
-        async with _build_client() as client:
+        async with _build_client(timeout_seconds=timeout_seconds) as client:
             start = time.perf_counter()
             response = await client.post("/api/chat", json=payload)
             response.raise_for_status()

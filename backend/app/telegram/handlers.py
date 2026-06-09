@@ -12,7 +12,7 @@ from app.brain.telegram_streamer import stream_telegram_response
 from app.core.config import get_settings
 from app.db.session import AsyncSessionLocal
 from app.modules.users.service import ensure_default_user_exists
-from app.telegram.formatter import format_telegram_reply
+from app.telegram.formatter import format_telegram_reply, reply_telegram
 from app.telegram.instructor import _local_fallback, classify_telegram_message
 from app.telegram.security import UNAUTHORIZED_MESSAGE, is_user_allowed
 
@@ -76,7 +76,7 @@ async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 result = await stream_telegram_response(message, _factory)
             else:
                 result = await _factory()
-                await message.reply_text(format_telegram_reply(result.response))
+                await reply_telegram(message, result.response, html=True)
 
             logger.info(
                 "telegram_reply_sent user_id=%s intent=%s ms=%s",
@@ -90,7 +90,7 @@ async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             user_id,
             text[:300],
         )
-        await message.reply_text(format_telegram_reply(_DEFAULT_USER_MISSING_MESSAGE))
+        await reply_telegram(message, _DEFAULT_USER_MISSING_MESSAGE, html=False)
     except Exception:
         logger.exception(
             "telegram_instructor_error user_id=%s text=%s",
@@ -104,4 +104,4 @@ async def handle_free_text(update: Update, context: ContextTypes.DEFAULT_TYPE) -
             memory_saved=False,
             tool_reply=None,
         )
-        await message.reply_text(format_telegram_reply(fallback or _LAST_RESORT_REPLY))
+        await reply_telegram(message, fallback or _LAST_RESORT_REPLY, html=True)

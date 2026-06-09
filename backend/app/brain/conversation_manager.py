@@ -10,6 +10,7 @@ from typing import Any, Callable
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.brain.action_executor import execute_actions
+from app.brain.background_collector import collect_conversation_data
 from app.brain.context_builder import build_conversation_context
 from app.brain.response_generator import generate_response
 from app.brain.schemas import BrainResult
@@ -24,8 +25,10 @@ from app.telegram.formatter import format_telegram_reply
 logger = logging.getLogger(__name__)
 
 _LAST_RESORT = (
-    "Entendi. Vou guardar isso como contexto para te responder melhor nas próximas."
+    "Tô aqui com você. Me conta como você tá — pode ser sobre o dia ou o que tiver pesando."
 )
+
+_TELEGRAM_ORIGINS = frozenset({"telegram", "benchmark"})
 
 
 async def _persist_conversation(
@@ -71,7 +74,7 @@ async def process_message(
         )
 
     try:
-        context = await build_conversation_context(db, user_id, normalized)
+        context = await build_conversation_context(db, user_id, normalized, origin=origin)
         logger.info(
             "brain_context_built user_id=%s intent=%s chars=%s",
             user_id,
@@ -87,30 +90,36 @@ async def process_message(
             context.classification,
         )
 
-        actions = []
-        if allow_tools:
-            actions = decide_actions(normalized, context)
-            logger.info(
-                "brain_actions_decided user_id=%s actions=%s",
-                user_id,
-                [a.action for a in actions],
+        actions: list = []
+        companion_first = origin in _TELEGRAM_ORIGINS
+
+        if companion_first:
+            # Companion AI responds first; background collector runs after.
+            response, model_used, used_fallback = await generate_response(
+                normalized,
+                context,
+                [],
+                prefer_speed=prefer_speed,
+                allow_llm=allow_llm,
+                response_mode=response_mode,
+                ollama_chat_func=ollama_chat_func,
             )
-            actions = await execute_actions(db, user_id, actions, context.classification)
-            logger.info(
-                "brain_actions_executed user_id=%s results=%s",
-                user_id,
-                [(a.action, a.success) for a in actions],
+            if allow_tools:
+                actions = await collect_conversation_data(db, user_id, normalized, context)
+        else:
+            if allow_tools:
+                actions = decide_actions(normalized, context)
+                actions = await execute_actions(db, user_id, actions, context.classification)
+            response, model_used, used_fallback = await generate_response(
+                normalized,
+                context,
+                actions,
+                prefer_speed=prefer_speed,
+                allow_llm=allow_llm,
+                response_mode=response_mode,
+                ollama_chat_func=ollama_chat_func,
             )
 
-        response, model_used, used_fallback = await generate_response(
-            normalized,
-            context,
-            actions,
-            prefer_speed=prefer_speed,
-            allow_llm=allow_llm,
-            response_mode=response_mode,
-            ollama_chat_func=ollama_chat_func,
-        )
         logger.info(
             "brain_response_generated user_id=%s model=%s fallback=%s",
             user_id,

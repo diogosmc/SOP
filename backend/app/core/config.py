@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     timezone: str = "America/Sao_Paulo"
     cors_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model_fast: str = "qwen3:4b"
+    ollama_model_fast: str = "gemma:2b"
     ollama_model_main: str = "mistral:7b"
     ollama_model_embed: str = "nomic-embed-text"
     ollama_context_size: int = 2048

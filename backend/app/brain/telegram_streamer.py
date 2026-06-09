@@ -12,7 +12,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.brain.schemas import BrainResult
 from app.core.config import get_settings
-from app.telegram.formatter import format_telegram_reply
+from app.telegram.formatter import edit_telegram, format_telegram_reply, reply_telegram
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ async def stream_telegram_response(
     """Send/edit Telegram message with block-based streaming."""
     settings = get_settings()
     start = time.perf_counter()
-    sent = await telegram_message.reply_text(format_telegram_reply(THINKING_PLACEHOLDER))
+    sent = await reply_telegram(telegram_message, THINKING_PLACEHOLDER, html=False)
     first_response_ms = int((time.perf_counter() - start) * 1000)
 
     factory_timeout = settings.telegram_llm_timeout_seconds + 2.0
@@ -71,10 +71,10 @@ async def stream_telegram_response(
                 used_fallback=True,
             )
         try:
-            await sent.edit_text(format_telegram_reply(result.response))
+            await edit_telegram(sent, result.response, html=True)
         except Exception:
             logger.exception("telegram_stream_edit_failed")
-            await telegram_message.reply_text(format_telegram_reply(result.response))
+            await reply_telegram(telegram_message, result.response, html=True)
         result.response_time_ms = int((time.perf_counter() - start) * 1000)
         return result
 
@@ -136,10 +136,10 @@ async def stream_telegram_response(
                 )
 
     try:
-        await sent.edit_text(format_telegram_reply(result.response))
+        await edit_telegram(sent, result.response, html=True)
     except Exception:
         logger.exception("telegram_stream_final_edit_failed")
-        await telegram_message.reply_text(format_telegram_reply(result.response))
+        await reply_telegram(telegram_message, result.response, html=True)
 
     result.response_time_ms = int((time.perf_counter() - start) * 1000)
     logger.info(

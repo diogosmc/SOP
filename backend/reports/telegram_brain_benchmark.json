@@ -1,179 +1,722 @@
-[
-  {
-    "message": "Estou desanimado hoje",
-    "total_ms": 93,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_memory",
-      "update_journal"
-    ],
-    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Ah sei lá, tô afim de ficar deitado",
-    "total_ms": 31,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "update_journal"
-    ],
-    "response": "Entendi. Pelo que você falou antes, parece mais um dia de baixa energia do que falta de vontade.\n\nSe for descansar hoje, tudo bem. Só tenta escolher uma coisa mínima para não terminar o dia com sensação de culpa — tipo separar o material de amanhã ou revisar por 10 minutos.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Não vlw",
-    "total_ms": 27,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [],
-    "response": "Tudo certo.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Amanhã tenho autoescola às 8",
-    "total_ms": 43,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_memory",
-      "update_journal",
-      "create_reminder",
-      "create_task"
-    ],
-    "response": "Anotei isso como compromisso (Autoescola). Vou considerar na organização do seu dia.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Preciso revisar anatomia amanhã",
-    "total_ms": 36,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_task",
-      "update_journal",
-      "create_memory"
-    ],
-    "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Gastei 20 no lanche",
-    "total_ms": 42,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_finance_transaction",
-      "update_journal"
-    ],
-    "response": "Registrei esse gasto no financeiro.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Anota que segunda preciso resolver pendências",
-    "total_ms": 45,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_note"
-    ],
-    "response": "Anotado.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Quero organizar meu dia amanhã",
-    "total_ms": 27,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "update_journal"
-    ],
-    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Me ajuda a montar um plano de estudo rápido",
-    "total_ms": 32,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_study_log",
-      "update_journal"
-    ],
-    "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Hoje não fiz nada e tô me sentindo culpado",
-    "total_ms": 27,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "update_journal"
-    ],
-    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Tenho prova semana que vem",
-    "total_ms": 32,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "create_memory",
-      "update_journal",
-      "create_reminder",
-      "create_task"
-    ],
-    "response": "Anotei isso como compromisso (Prova semana que vem). Vou considerar na organização do seu dia.",
-    "status": "OK",
-    "error": null
-  },
-  {
-    "message": "Vou treinar peito hoje",
-    "total_ms": 29,
-    "first_response_ms": 0,
-    "model_used": null,
-    "used_fallback": true,
-    "used_llm": false,
-    "actions": [
-      "update_journal"
-    ],
-    "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena para fazer hoje, nem que seja por 10 minutos. Isso já evita a sensação de ter perdido o dia inteiro.",
-    "status": "OK",
-    "error": null
-  }
-]
+{
+  "fallback_only": [
+    {
+      "message": "Estou desanimado hoje",
+      "mode": "fallback_only",
+      "total_ms": 126,
+      "first_response_ms": 8,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Ah sei lá, tô afim de ficar deitado",
+      "mode": "fallback_only",
+      "total_ms": 36,
+      "first_response_ms": 6,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece mais um dia de baixa energia do que falta de vontade.\n\nSe for descansar hoje, tudo bem. Escolhe uma coisa mínima pra não terminar o dia com culpa — separar material de amanhã ou 10 min de revisão.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Não vlw",
+      "mode": "fallback_only",
+      "total_ms": 31,
+      "first_response_ms": 4,
+      "primary_intent": "general_chat",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [],
+      "response": "👍",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanhã tenho autoescola às 8",
+      "mode": "fallback_only",
+      "total_ms": 49,
+      "first_response_ms": 6,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Autoescola). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Preciso revisar anatomia amanhã",
+      "mode": "fallback_only",
+      "total_ms": 35,
+      "first_response_ms": 4,
+      "primary_intent": "study_plan",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_task",
+        "update_journal",
+        "create_memory"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Gastei 20 no lanche",
+      "mode": "fallback_only",
+      "total_ms": 44,
+      "first_response_ms": 4,
+      "primary_intent": "expense_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_finance_transaction",
+        "update_journal"
+      ],
+      "response": "Registrei esse gasto no financeiro.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Anota que segunda preciso resolver pendências",
+      "mode": "fallback_only",
+      "total_ms": 45,
+      "first_response_ms": 5,
+      "primary_intent": "note_creation",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_note"
+      ],
+      "response": "Anotado.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Quero organizar meu dia amanhã",
+      "mode": "fallback_only",
+      "total_ms": 30,
+      "first_response_ms": 4,
+      "primary_intent": "planning_request",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "update_journal"
+      ],
+      "response": "Vamos simplificar: 1 prioridade principal, 1 tarefa leve e 1 coisa que já deixa amanhã mais fácil (roupa, material, alarme).",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Me ajuda a montar um plano de estudo rápido",
+      "mode": "fallback_only",
+      "total_ms": 81,
+      "first_response_ms": 3,
+      "primary_intent": "study_log",
+      "secondary_intents": [
+        "planning_request"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_study_log",
+        "update_journal"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Hoje não fiz nada e tô me sentindo culpado",
+      "mode": "fallback_only",
+      "total_ms": 32,
+      "first_response_ms": 5,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Tenho prova semana que vem",
+      "mode": "fallback_only",
+      "total_ms": 33,
+      "first_response_ms": 3,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Prova semana que vem). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Vou treinar peito hoje",
+      "mode": "fallback_only",
+      "total_ms": 32,
+      "first_response_ms": 4,
+      "primary_intent": "workout_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_workout_log",
+        "update_journal"
+      ],
+      "response": "Boa. Registrei seu treino. Foca na execução hoje — depois a gente ajusta volume e descanso se precisar.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanha vou levantar cedo pra trabalhar e to com uma preguiça gigante",
+      "mode": "fallback_only",
+      "total_ms": 30,
+      "first_response_ms": 4,
+      "primary_intent": "routine_planning",
+      "secondary_intents": [
+        "emotional_checkin"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi: amanhã você quer levantar cedo pra trabalhar, mas tá com preguiça agora.\n\nPrepara hoje o que puder — roupa, alarme, café pronto — pra amanhã não depender de motivação. E agora, descansa sem culpa se precisar.",
+      "status": "OK",
+      "error": null
+    }
+  ],
+  "hybrid": [
+    {
+      "message": "Estou desanimado hoje",
+      "mode": "hybrid",
+      "total_ms": 18651,
+      "first_response_ms": 4,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Ah sei lá, tô afim de ficar deitado",
+      "mode": "hybrid",
+      "total_ms": 18307,
+      "first_response_ms": 4,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece mais um dia de baixa energia do que falta de vontade.\n\nSe for descansar hoje, tudo bem. Escolhe uma coisa mínima pra não terminar o dia com culpa — separar material de amanhã ou 10 min de revisão.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Não vlw",
+      "mode": "hybrid",
+      "total_ms": 31,
+      "first_response_ms": 4,
+      "primary_intent": "general_chat",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [],
+      "response": "👍",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanhã tenho autoescola às 8",
+      "mode": "hybrid",
+      "total_ms": 37,
+      "first_response_ms": 4,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Autoescola). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Preciso revisar anatomia amanhã",
+      "mode": "hybrid",
+      "total_ms": 33,
+      "first_response_ms": 4,
+      "primary_intent": "study_plan",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_task",
+        "update_journal",
+        "create_memory"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Gastei 20 no lanche",
+      "mode": "hybrid",
+      "total_ms": 30,
+      "first_response_ms": 4,
+      "primary_intent": "expense_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_finance_transaction",
+        "update_journal"
+      ],
+      "response": "Registrei esse gasto no financeiro.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Anota que segunda preciso resolver pendências",
+      "mode": "hybrid",
+      "total_ms": 27,
+      "first_response_ms": 4,
+      "primary_intent": "note_creation",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_note"
+      ],
+      "response": "Anotado.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Quero organizar meu dia amanhã",
+      "mode": "hybrid",
+      "total_ms": 18312,
+      "first_response_ms": 4,
+      "primary_intent": "planning_request",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "update_journal"
+      ],
+      "response": "Vamos simplificar: 1 prioridade principal, 1 tarefa leve e 1 coisa que já deixa amanhã mais fácil (roupa, material, alarme).",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Me ajuda a montar um plano de estudo rápido",
+      "mode": "hybrid",
+      "total_ms": 18348,
+      "first_response_ms": 5,
+      "primary_intent": "study_log",
+      "secondary_intents": [
+        "planning_request"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_study_log",
+        "update_journal"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Hoje não fiz nada e tô me sentindo culpado",
+      "mode": "hybrid",
+      "total_ms": 18305,
+      "first_response_ms": 6,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Tenho prova semana que vem",
+      "mode": "hybrid",
+      "total_ms": 38,
+      "first_response_ms": 5,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Prova semana que vem). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Vou treinar peito hoje",
+      "mode": "hybrid",
+      "total_ms": 30,
+      "first_response_ms": 3,
+      "primary_intent": "workout_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_workout_log",
+        "update_journal"
+      ],
+      "response": "Boa. Registrei seu treino. Foca na execução hoje — depois a gente ajusta volume e descanso se precisar.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanha vou levantar cedo pra trabalhar e to com uma preguiça gigante",
+      "mode": "hybrid",
+      "total_ms": 18323,
+      "first_response_ms": 4,
+      "primary_intent": "routine_planning",
+      "secondary_intents": [
+        "emotional_checkin"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi: amanhã você quer levantar cedo pra trabalhar, mas tá com preguiça agora.\n\nPrepara hoje o que puder — roupa, alarme, café pronto — pra amanhã não depender de motivação. E agora, descansa sem culpa se precisar.",
+      "status": "OK",
+      "error": null
+    }
+  ],
+  "llm_only": [
+    {
+      "message": "Estou desanimado hoje",
+      "mode": "llm_only",
+      "total_ms": 18329,
+      "first_response_ms": 5,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Ah sei lá, tô afim de ficar deitado",
+      "mode": "llm_only",
+      "total_ms": 18310,
+      "first_response_ms": 4,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece mais um dia de baixa energia do que falta de vontade.\n\nSe for descansar hoje, tudo bem. Escolhe uma coisa mínima pra não terminar o dia com culpa — separar material de amanhã ou 10 min de revisão.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Não vlw",
+      "mode": "llm_only",
+      "total_ms": 30,
+      "first_response_ms": 4,
+      "primary_intent": "general_chat",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [],
+      "response": "👍",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanhã tenho autoescola às 8",
+      "mode": "llm_only",
+      "total_ms": 18330,
+      "first_response_ms": 4,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Autoescola). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Preciso revisar anatomia amanhã",
+      "mode": "llm_only",
+      "total_ms": 18336,
+      "first_response_ms": 7,
+      "primary_intent": "study_plan",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_task",
+        "update_journal",
+        "create_memory"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Gastei 20 no lanche",
+      "mode": "llm_only",
+      "total_ms": 18322,
+      "first_response_ms": 4,
+      "primary_intent": "expense_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_finance_transaction",
+        "update_journal"
+      ],
+      "response": "Registrei esse gasto no financeiro.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Anota que segunda preciso resolver pendências",
+      "mode": "llm_only",
+      "total_ms": 18336,
+      "first_response_ms": 5,
+      "primary_intent": "note_creation",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_note"
+      ],
+      "response": "Anotado.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Quero organizar meu dia amanhã",
+      "mode": "llm_only",
+      "total_ms": 18330,
+      "first_response_ms": 5,
+      "primary_intent": "planning_request",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "update_journal"
+      ],
+      "response": "Vamos simplificar: 1 prioridade principal, 1 tarefa leve e 1 coisa que já deixa amanhã mais fácil (roupa, material, alarme).",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Me ajuda a montar um plano de estudo rápido",
+      "mode": "llm_only",
+      "total_ms": 18408,
+      "first_response_ms": 6,
+      "primary_intent": "study_log",
+      "secondary_intents": [
+        "planning_request"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_study_log",
+        "update_journal"
+      ],
+      "response": "Beleza, registrei isso como estudo. Posso te ajudar a transformar em revisão prática depois.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Hoje não fiz nada e tô me sentindo culpado",
+      "mode": "llm_only",
+      "total_ms": 18365,
+      "first_response_ms": 7,
+      "primary_intent": "emotional_checkin",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi. Parece um dia de energia baixa. Vamos simplificar: escolhe só uma coisa pequena hoje, nem que seja por 10 minutos.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Tenho prova semana que vem",
+      "mode": "llm_only",
+      "total_ms": 18333,
+      "first_response_ms": 8,
+      "primary_intent": "appointment",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal",
+        "create_reminder",
+        "create_task"
+      ],
+      "response": "Anotei isso como compromisso (Prova semana que vem). Vou considerar na organização do seu dia.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Vou treinar peito hoje",
+      "mode": "llm_only",
+      "total_ms": 18349,
+      "first_response_ms": 7,
+      "primary_intent": "workout_log",
+      "secondary_intents": [],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_workout_log",
+        "update_journal"
+      ],
+      "response": "Boa. Registrei seu treino. Foca na execução hoje — depois a gente ajusta volume e descanso se precisar.",
+      "status": "OK",
+      "error": null
+    },
+    {
+      "message": "Amanha vou levantar cedo pra trabalhar e to com uma preguiça gigante",
+      "mode": "llm_only",
+      "total_ms": 18336,
+      "first_response_ms": 8,
+      "primary_intent": "routine_planning",
+      "secondary_intents": [
+        "emotional_checkin"
+      ],
+      "model_used": null,
+      "used_fallback": true,
+      "used_llm": false,
+      "actions": [
+        "create_memory",
+        "update_journal"
+      ],
+      "response": "Entendi: amanhã você quer levantar cedo pra trabalhar, mas tá com preguiça agora.\n\nPrepara hoje o que puder — roupa, alarme, café pronto — pra amanhã não depender de motivação. E agora, descansa sem culpa se precisar.",
+      "status": "OK",
+      "error": null
+    }
+  ]
+}

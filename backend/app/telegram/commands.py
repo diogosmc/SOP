@@ -18,7 +18,7 @@ from app.telegram.formatter import (
     format_debug_message,
     format_journal_summary,
     format_status_message,
-    format_telegram_reply,
+    reply_telegram,
 )
 from app.telegram.instructor import process_telegram_message
 from app.telegram.security import is_user_allowed, is_valid_telegram_user_id
@@ -31,7 +31,7 @@ async def _reply_unauthorized(update: Update) -> None:
 
 async def _reply(update: Update, text: str) -> None:
     if update.message:
-        await update.message.reply_text(format_telegram_reply(text))
+        await reply_telegram(update.message, text, html=True)
 
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:

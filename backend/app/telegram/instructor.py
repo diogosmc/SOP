@@ -181,12 +181,128 @@ _ROUTINE_MARKERS = ("trabalhar", "trabalho", "levantar cedo", "rotina", "cedo")
 
 _WORKOUT_MARKERS = ("treinar", "treino", "peito", "pernas", "academia", "malhar", "corri")
 
+_DEFERRAL_MARKERS = (
+    "deixar",
+    "deixar pra",
+    "passar pra",
+    "adiar",
+    "empurrar pra",
+    "vou deixar",
+    "vou passar",
+    "fazer amanhã",
+    "fazer amanha",
+)
+
+_STUDY_MARKERS = (
+    "faculdade",
+    "estudar",
+    "estudo",
+    "matéria",
+    "materia",
+    "prova",
+    "aula",
+    "revisar",
+    "trabalho da faculdade",
+)
+
+
+_GOAL_MARKERS = (
+    "quero juntar",
+    "juntar dinheiro",
+    "comprar moto",
+    "comprar minha moto",
+    "comprar uma moto",
+    "meu objetivo",
+    "meta de",
+)
+
+_FINANCE_STRESS_MARKERS = (
+    "final do mes",
+    "final do mês",
+    "nao posso gastar",
+    "não posso gastar",
+    "sem gastar",
+    "tudo ja esta pago",
+    "tudo já está pago",
+    "tudo pago",
+)
+
+_CONVERSATIONAL_MARKERS = (
+    "adiantar",
+    "atrasad",
+    "preciso",
+    "recomenda",
+    "o que vo",
+    "o que você",
+    "o que vc",
+    "to de boa",
+    "vou precisar",
+    "me ajuda",
+    "como faço",
+    "como faco",
+)
+
+
+def _is_conversational_study(lowered: str) -> bool:
+    if not _has_study_context(lowered):
+        return False
+    return any(marker in lowered for marker in _CONVERSATIONAL_MARKERS)
+
+
+def _looks_like_wake_plan(lowered: str) -> bool:
+    return ("amanhã" in lowered or "amanha" in lowered) and any(
+        w in lowered for w in ("acordar", "acodar", "6:", "7:", "5:", "da manh", "cedo")
+    )
+
+
+def _is_deferral_to_tomorrow(lowered: str) -> bool:
+    if "amanhã" not in lowered and "amanha" not in lowered:
+        return False
+    return any(marker in lowered for marker in _DEFERRAL_MARKERS)
+
+
+def _has_study_context(lowered: str) -> bool:
+    return any(marker in lowered for marker in _STUDY_MARKERS) or "estud" in lowered
+
+
+def _denies_scheduled_item(lowered: str) -> bool:
+    """User is correcting or denying a commitment (e.g. no autoescola tomorrow)."""
+    return bool(
+        re.search(
+            r"n[aã]o tenho auto|nao tenho auto|sem auto\s*escola|"
+            r"nao vou na auto|n[aã]o vou na auto|s[oó] na academia",
+            lowered,
+        )
+    )
+
+
+def _is_explicit_appointment(lowered: str) -> bool:
+    if "vou ter que" in lowered or "tenho que" in lowered:
+        return False
+    if _denies_scheduled_item(lowered):
+        return False
+    if any(marker in lowered for marker in _APPOINTMENT_MARKERS):
+        return True
+    if ("tenho" in lowered or re.search(r"\bvou ter\b", lowered)) and (
+        "às" in lowered or " as " in lowered or re.search(r"\d{1,2}[h:]", lowered)
+    ):
+        return True
+    return False
+
+
 _PLANNING_MARKERS = (
     "organizar meu dia",
     "organizar dia",
     "plano de estudo",
     "montar um plano",
     "organizar o dia",
+    "listar o que",
+    "liste o dia",
+    "liste exatamente",
+    "o que vou fazer amanha",
+    "o que vou fazer amanhã",
+    "agenda de amanha",
+    "agenda de amanhã",
 )
 
 _PRIMARY_PRIORITY = (
@@ -196,6 +312,7 @@ _PRIMARY_PRIORITY = (
     "workout_log",
     "study_log",
     "task_creation",
+    "goal_update",
     "appointment",
     "routine_planning",
     "planning_request",
@@ -219,47 +336,99 @@ def _detect_intent_signals(normalized: str, lowered: str, base: dict[str, Any]) 
     has_finance_keyword = any(
         word in lowered for word in ("gastei", "paguei", "comprei", "despesa", "gasto de", "r$", "reais")
     )
-    if base_intent == "expense_log" and (has_finance_keyword or not has_appointment_marker):
+    if base_intent == "expense_log" and has_finance_keyword and not _looks_like_wake_plan(lowered):
         signals.append("expense_log")
 
-    if any(marker in lowered for marker in _PLANNING_MARKERS):
+    if any(marker in lowered for marker in _PLANNING_MARKERS) or "recomenda" in lowered:
         signals.append("planning_request")
+
+    if _looks_like_wake_plan(lowered):
+        signals.append("routine_planning")
+        if "planning_request" not in signals:
+            signals.append("planning_request")
+
+    if _is_deferral_to_tomorrow(lowered):
+        if _has_study_context(lowered):
+            signals.append("study_plan")
+        else:
+            signals.append("routine_planning")
 
     if ("amanhã" in lowered or "amanha" in lowered) and any(
         marker in lowered for marker in _ROUTINE_MARKERS
     ):
-        signals.append("routine_planning")
-
-    if any(marker in lowered for marker in _APPOINTMENT_MARKERS):
-        signals.append("appointment")
-    elif ("amanhã" in lowered or "amanha" in lowered) and any(
-        word in lowered for word in ("vou", "tenho")
-    ):
         if "routine_planning" not in signals:
-            signals.append("appointment")
+            signals.append("routine_planning")
 
-    if base_intent in {"study_plan", "study_log"}:
-        signals.append(base_intent)
+    if _is_explicit_appointment(lowered):
+        signals.append("appointment")
+
+    if base_intent == "study_log" or (
+        base_intent == "general_chat" and _has_study_context(lowered)
+    ):
+        if _is_conversational_study(lowered):
+            signals.append("planning_request")
+        elif base_intent == "study_log":
+            signals.append("study_log")
+
+    if base_intent == "study_plan":
+        signals.append("study_plan")
 
     if base_intent == "task_creation":
         signals.append("task_creation")
 
+    if any(marker in lowered for marker in _FINANCE_STRESS_MARKERS):
+        signals.append("general_chat")
+
+    if any(marker in lowered for marker in _GOAL_MARKERS) or base_intent == "goal_update":
+        signals.append("goal_update")
+        if "general_chat" not in signals:
+            signals.append("general_chat")
+
+    if _denies_scheduled_item(lowered):
+        signals.append("routine_planning")
+        if "general_chat" not in signals:
+            signals.append("general_chat")
+
     if "?" in normalized and base_intent == "general_chat":
         signals.append("question")
+
+    if len(normalized) >= 40 and "emotional_checkin" in signals:
+        signals.append("general_chat")
 
     if not signals:
         signals.append(base_intent if base_intent else "general_chat")
 
     seen: list[str] = []
     for item in signals:
+        if item == "expense_log" and not has_finance_keyword:
+            continue
+        if item == "appointment" and _denies_scheduled_item(lowered):
+            continue
         if item not in seen:
             seen.append(item)
     return seen
 
 
 def _pick_primary_and_secondary(signals: list[str]) -> tuple[str, list[str]]:
+    if "goal_update" in signals:
+        return "goal_update", [s for s in signals if s not in {"goal_update", "general_chat"}]
+
     if "routine_planning" in signals and "emotional_checkin" in signals:
         return "routine_planning", ["emotional_checkin"]
+
+    if "emotional_checkin" in signals and "study_plan" in signals:
+        return "emotional_checkin", ["study_plan"]
+
+    if "planning_request" in signals and (
+        "routine_planning" in signals or "study_plan" in signals
+    ):
+        if "emotional_checkin" in signals:
+            pass  # fall through to priority list
+        else:
+            return "planning_request", [s for s in signals if s != "planning_request"]
+
+    if "general_chat" in signals and "emotional_checkin" in signals:
+        return "general_chat", [s for s in signals if s not in {"general_chat", "emotional_checkin"}]
 
     for intent in _PRIMARY_PRIORITY:
         if intent in signals:
@@ -283,14 +452,16 @@ def _finalize_classification(
     result["intent"] = primary
 
     if primary == "appointment":
+        explicit = _is_explicit_appointment(lowered)
         result.update(
             {
+                "explicit_appointment": explicit,
                 "categories": ["routine", "appointment"],
                 "should_save_memory": True,
                 "entities": {
                     **entities,
                     "title": _extract_appointment_title(normalized),
-                    "remind_at": _parse_relative_datetime(normalized),
+                    "remind_at": _parse_relative_datetime(normalized) if explicit else None,
                 },
             }
         )
@@ -325,6 +496,8 @@ def _finalize_classification(
         }
     elif primary in {"study_log", "study_plan", "workout_log", "planning_request"}:
         result["should_save_memory"] = True
+        if primary == "study_plan" and _is_deferral_to_tomorrow(lowered):
+            result["study_deferral"] = True
     elif primary == "general_chat" and len(normalized) >= 12:
         result["should_save_memory"] = True
         result["categories"] = ["context"]
@@ -369,6 +542,20 @@ def classify_telegram_message(text: str) -> dict[str, Any]:
                     "title": title,
                     "remind_at": _parse_relative_datetime(normalized),
                 },
+            }
+        )
+        return result
+
+    from app.brain.companion import is_social_greeting
+
+    if is_social_greeting(normalized):
+        result.update(
+            {
+                "intent": "general_chat",
+                "primary_intent": "general_chat",
+                "secondary_intents": [],
+                "is_greeting": True,
+                "should_save_memory": False,
             }
         )
         return result
